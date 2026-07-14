@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Roamly — Plan Your Trip, Minute by Minute</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#D4664A',
+            'primary-dark': '#BF5538',
+            'primary-muted': 'rgba(212,102,74,0.10)',
+            bg: '#F5F4F0',
+            'bg-card': '#FDFCFA',
+            heading: '#1F1F1F',
+            body: '#6B7280',
+            border: '#E2E0DC',
+          },
+          fontFamily: {
+            display: ['Fraunces', 'Georgia', 'serif'],
+            sans: ['DM Sans', '-apple-system', 'sans-serif'],
+          },
+          letterSpacing: {
+            tightest: '-0.04em',
+            tighter: '-0.03em',
+            tight: '-0.02em',
+          },
+          boxShadow: {
+            card: '0 2px 8px rgba(31,31,31,0.06), 0 8px 28px rgba(31,31,31,0.08)',
+            'card-hover': '0 4px 16px rgba(212,102,74,0.12), 0 12px 40px rgba(31,31,31,0.10)',
+            btn: '0 2px 8px rgba(212,102,74,0.30), 0 1px 2px rgba(212,102,74,0.20)',
+            'btn-hover': '0 4px 14px rgba(212,102,74,0.40), 0 2px 4px rgba(212,102,74,0.25)',
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'DM Sans', -apple-system, sans-serif; background: #F5F4F0; color: #1F1F1F; -webkit-font-smoothing: antialiased; }
+
+    .font-display { font-family: 'Fraunces', Georgia, serif; }
+
+    /* Grain texture overlay */
+    .grain::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      border-radius: inherit;
+    }
+
+    /* Itinerary card mock */
+    .itin-card { background: #fff; border-radius: 14px; box-shadow: 0 2px 8px rgba(31,31,31,0.06), 0 16px 48px rgba(31,31,31,0.12); overflow: hidden; }
+    .itin-header { background: linear-gradient(135deg, #D4664A 0%, #C25A3E 100%); padding: 16px 20px; }
+    .itin-body { padding: 16px 20px; }
+    .itin-stop { display: flex; gap: 12px; padding: 8px 0; position: relative; }
+    .itin-stop:not(:last-child)::after { content: ''; position: absolute; left: 15px; top: 32px; bottom: -4px; width: 1px; background: #E2E0DC; }
+    .itin-dot { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+    .itin-time { font-size: 11px; font-weight: 600; color: #D4664A; font-family: 'DM Sans', sans-serif; letter-spacing: 0.02em; }
+    .itin-label { font-size: 13px; font-weight: 500; color: #1F1F1F; font-family: 'DM Sans', sans-serif; line-height: 1.3; }
+    .itin-sub { font-size: 11.5px; color: #9CA3AF; font-family: 'DM Sans', sans-serif; }
+
+    /* Step connector */
+    .step-line { position: absolute; left: 24px; top: 48px; bottom: -24px; width: 2px; background: linear-gradient(to bottom, #E2E0DC, transparent); }
+
+    /* Feature card hover */
+    .feat-card { transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.22s ease; }
+    .feat-card:hover { transform: translateY(-4px); }
+
+    /* Nav link */
+    .nav-link { position: relative; color: #6B7280; font-size: 14px; font-weight: 500; text-decoration: none; transition: color 0.18s; }
+    .nav-link:hover { color: #1F1F1F; }
+    .nav-link::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 1.5px; background: #D4664A; transition: width 0.2s ease; }
+    .nav-link:hover::after { width: 100%; }
+
+    /* CTA button */
+    .btn-primary { display: inline-flex; align-items: center; gap: 6px; background: #D4664A; color: #fff; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; text-decoration: none; box-shadow: 0 2px 8px rgba(212,102,74,0.30), 0 1px 2px rgba(212,102,74,0.20); transition: background 0.18s, box-shadow 0.18s, transform 0.1s; }
+    .btn-primary:hover { background: #BF5538; box-shadow: 0 4px 14px rgba(212,102,74,0.40), 0 2px 4px rgba(212,102,74,0.25); }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-primary:focus-visible { outline: 3px solid rgba(212,102,74,0.40); outline-offset: 2px; }
+
+    .btn-outline { display: inline-flex; align-items: center; gap: 6px; background: transparent; color: #1F1F1F; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; padding: 12px 24px; border-radius: 8px; border: 1.5px solid #E2E0DC; cursor: pointer; text-decoration: none; transition: border-color 0.18s, background 0.18s, transform 0.1s; }
+    .btn-outline:hover { border-color: #D4664A; background: rgba(212,102,74,0.04); }
+    .btn-outline:active { transform: scale(0.98); }
+    .btn-outline:focus-visible { outline: 3px solid rgba(212,102,74,0.40); outline-offset: 2px; }
+
+    /* Mobile menu */
+    #mobile-menu { display: none; }
+    #mobile-menu.open { display: flex; }
+
+    @media (max-width: 768px) {
+      .hero-visual { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<header class="sticky top-0 z-50 bg-bg border-b border-border" style="backdrop-filter:blur(12px);background:rgba(245,244,240,0.92)">
+  <nav class="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between gap-6">
+    <!-- Logo -->
+    <a href="index.html" class="flex items-center gap-2 no-underline">
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:#D4664A">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M9 2C5.13 2 2 5.13 2 9s3.13 7 7 7 7-3.13 7-7-3.13-7-7-7z" stroke="white" stroke-width="1.4"/>
+          <path d="M9 5v4l3 2" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="font-display font-semibold text-heading" style="font-size:19px;letter-spacing:-0.02em">Roamly</span>
+    </a>
+
+    <!-- Desktop nav -->
+    <div class="hidden md:flex items-center gap-7">
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#how-it-works" class="nav-link">How it works</a>
+      <a href="#pricing" class="nav-link">Pricing</a>
+    </div>
+
+    <!-- Desktop CTAs -->
+    <div class="hidden md:flex items-center gap-3">
+      <a href="login.html" class="btn-outline" style="padding:9px 20px;font-size:14px">Log in</a>
+      <a href="register.html" class="btn-primary" style="padding:9px 20px;font-size:14px">Get Started Free</a>
+    </div>
+
+    <!-- Mobile hamburger -->
+    <button id="hamburger-btn" class="md:hidden p-2 rounded-lg" style="color:#6B7280;transition:background 0.15s" onclick="document.getElementById('mobile-menu').classList.toggle('open')">
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </nav>
+
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="flex-col gap-1 px-5 pb-4 border-t border-border md:hidden" style="background:rgba(245,244,240,0.97)">
+    <a href="#features" class="block py-3 text-sm font-medium" style="color:#6B7280;text-decoration:none;border-bottom:1px solid #E2E0DC">Features</a>
+    <a href="#how-it-works" class="block py-3 text-sm font-medium" style="color:#6B7280;text-decoration:none;border-bottom:1px solid #E2E0DC">How it works</a>
+    <a href="#pricing" class="block py-3 text-sm font-medium" style="color:#6B7280;text-decoration:none;border-bottom:1px solid #E2E0DC">Pricing</a>
+    <div class="flex gap-3 pt-3">
+      <a href="login.html" class="btn-outline flex-1 justify-center" style="padding:10px;font-size:14px">Log in</a>
+      <a href="register.html" class="btn-primary flex-1 justify-center" style="padding:10px;font-size:14px">Get Started</a>
+    </div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="relative overflow-hidden grain" style="background:radial-gradient(ellipse at 15% 60%, rgba(212,102,74,0.10) 0%, transparent 55%), radial-gradient(ellipse at 85% 10%, rgba(212,102,74,0.06) 0%, transparent 50%), #F5F4F0; display:flex; align-items:center">
+  <div class="max-w-6xl mx-auto px-5 py-20 w-full">
+    <div class="grid md:grid-cols-2 gap-12 items-center">
+
+      <!-- Text -->
+      <div>
+        <div class="inline-flex items-center gap-2 mb-5 px-3 py-1.5 rounded-full border border-border" style="background:rgba(212,102,74,0.07);font-size:12.5px;font-weight:500;color:#D4664A">
+          <span style="width:6px;height:6px;border-radius:50%;background:#D4664A;display:inline-block"></span>
+          Smart travel planning
+        </div>
+        <h1 class="font-display font-semibold text-heading mb-5" style="font-size:clamp(38px,5vw,58px);line-height:1.08;letter-spacing:-0.03em">
+          Plan your trip,<br>
+          <em style="font-style:italic;color:#D4664A">minute by minute.</em>
+        </h1>
+        <p class="text-body mb-8" style="font-size:17px;line-height:1.75;max-width:460px">
+          Roamly builds a complete day-by-day schedule with times, order, and travel gaps — so you spend less time planning and more time exploring.
+        </p>
+        <div class="flex flex-wrap gap-3 mb-10">
+          <a href="register.html" class="btn-primary" style="font-size:16px;padding:13px 28px">
+            Start Planning Free
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a href="#how-it-works" class="btn-outline" style="font-size:16px;padding:13px 28px">See how it works</a>
+        </div>
+        <div class="flex items-center gap-5" style="font-size:13px;color:#9CA3AF">
+          <span class="flex items-center gap-1.5">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3" stroke="#D4664A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Free to get started
+          </span>
+          <span class="flex items-center gap-1.5">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3" stroke="#D4664A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            No credit card needed
+          </span>
+          <span class="flex items-center gap-1.5">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 3" stroke="#D4664A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Share with friends
+          </span>
+        </div>
+      </div>
+
+      <!-- Hero Visual: Mock App UI -->
+      <div class="hero-visual flex justify-center md:justify-end">
+        <div style="width:340px;max-width:100%">
+          <div class="itin-card" style="transform:rotate(1.5deg)">
+            <div class="itin-header">
+              <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.7);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px">Day 1 of 4</div>
+              <div style="font-size:17px;font-weight:600;color:#fff;font-family:'DM Sans',sans-serif;letter-spacing:-0.01em">Tokyo, Japan 🗾</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.65);margin-top:2px">Thursday, March 6 · 5 stops</div>
+            </div>
+            <div class="itin-body">
+              <div class="itin-stop">
+                <div class="itin-dot" style="background:rgba(212,102,74,0.10)">🏨</div>
+                <div>
+                  <div class="itin-time">09:00 AM</div>
+                  <div class="itin-label">Check in — Shinjuku Hotel</div>
+                  <div class="itin-sub">Allow 30 min</div>
+                </div>
+              </div>
+              <div class="itin-stop">
+                <div class="itin-dot" style="background:rgba(251,191,36,0.12)">⛩️</div>
+                <div>
+                  <div class="itin-time">10:00 AM</div>
+                  <div class="itin-label">Senso-ji Temple</div>
+                  <div class="itin-sub">20 min walk · 1.5 hrs visit</div>
+                </div>
+              </div>
+              <div class="itin-stop">
+                <div class="itin-dot" style="background:rgba(59,130,246,0.10)">🍜</div>
+                <div>
+                  <div class="itin-time">12:00 PM</div>
+                  <div class="itin-label">Ramen at Ichiran Shibuya</div>
+                  <div class="itin-sub">15 min transit · Lunch</div>
+                </div>
+              </div>
+              <div class="itin-stop">
+                <div class="itin-dot" style="background:rgba(16,185,129,0.10)">🛍️</div>
+                <div>
+                  <div class="itin-time">01:30 PM</div>
+                  <div class="itin-label">Akihabara Shopping District</div>
+                  <div class="itin-sub">10 min walk · 2 hrs</div>
+                </div>
+              </div>
+              <div class="itin-stop">
+                <div class="itin-dot" style="background:rgba(139,92,246,0.10)">🌆</div>
+                <div>
+                  <div class="itin-time">05:00 PM</div>
+                  <div class="itin-label">Tokyo Skytree — Sunset View</div>
+                  <div class="itin-sub">25 min transit</div>
+                </div>
+              </div>
+            </div>
+            <div style="padding:0 20px 16px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #F3F2EF;padding-top:12px">
+              <span style="font-size:12px;color:#9CA3AF;font-family:'DM Sans',sans-serif">Roamly auto-scheduled this</span>
+              <span style="font-size:12px;font-weight:600;color:#D4664A;font-family:'DM Sans',sans-serif">Day 2 →</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- SOCIAL PROOF BAR -->
+<div style="background:#1F1F1F;border-top:1px solid #2D2D2D;padding:16px 20px">
+  <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-8" style="font-size:13px;color:rgba(255,255,255,0.45);font-weight:500">
+    <span>✈️ &nbsp;Built for real travelers</span>
+    <span style="color:rgba(255,255,255,0.15)">|</span>
+    <span>🗺️ &nbsp;Works for any destination</span>
+    <span style="color:rgba(255,255,255,0.15)">|</span>
+    <span>👥 &nbsp;Plan solo or with a group</span>
+    <span style="color:rgba(255,255,255,0.15)">|</span>
+    <span>📱 &nbsp;Works on mobile & desktop</span>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="features" class="py-24" style="background:#FDFCFA">
+  <div class="max-w-6xl mx-auto px-5">
+    <div class="text-center mb-14">
+      <div class="inline-block mb-3 px-3 py-1 rounded-full" style="background:rgba(212,102,74,0.08);font-size:12.5px;font-weight:600;color:#D4664A;letter-spacing:0.04em;text-transform:uppercase">Features</div>
+      <h2 class="font-display font-semibold text-heading mb-4" style="font-size:clamp(28px,4vw,40px);line-height:1.15;letter-spacing:-0.03em">Everything you need to plan<br>a perfect trip</h2>
+      <p class="text-body mx-auto" style="font-size:16px;line-height:1.7;max-width:520px">No more switching between tabs, spreadsheets, and notes. Roamly keeps everything in one structured, timed plan.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 items-stretch">
+      <!-- Feature 1 -->
+      <div class="feat-card p-7 rounded-2xl border border-border bg-white" style="box-shadow:0 2px 8px rgba(31,31,31,0.06),0 8px 28px rgba(31,31,31,0.08)">
+        <div class="w-11 h-11 rounded-xl flex items-center justify-center mb-5" style="background:rgba(212,102,74,0.10)">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <rect x="3" y="4" width="16" height="15" rx="2.5" stroke="#D4664A" stroke-width="1.6"/>
+            <path d="M7 2v4M15 2v4M3 9h16" stroke="#D4664A" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M7 13h3M7 16h5" stroke="#D4664A" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3 class="font-semibold text-heading mb-2" style="font-size:17px;letter-spacing:-0.01em">Day-by-Day Planning</h3>
+        <p class="text-body" style="font-size:14px;line-height:1.7">Organize every activity, meal, and attraction across all your trip days — clearly laid out in order.</p>
+      </div>
+
+      <!-- Feature 2 -->
+      <div class="feat-card p-7 rounded-2xl border border-border bg-white" style="box-shadow:0 2px 8px rgba(31,31,31,0.06),0 8px 28px rgba(31,31,31,0.08)">
+        <div class="w-11 h-11 rounded-xl flex items-center justify-center mb-5" style="background:rgba(212,102,74,0.10)">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <circle cx="11" cy="11" r="8" stroke="#D4664A" stroke-width="1.6"/>
+            <path d="M11 6v5l3 2" stroke="#D4664A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h3 class="font-semibold text-heading mb-2" style="font-size:17px;letter-spacing:-0.01em">Auto-Timed Schedules</h3>
+        <p class="text-body" style="font-size:14px;line-height:1.7">Roamly automatically assigns times and adds travel gaps between stops — no manual calculation needed.</p>
+      </div>
+
+      <!-- Feature 3 -->
+      <div class="feat-card p-7 rounded-2xl border border-border bg-white" style="box-shadow:0 2px 8px rgba(31,31,31,0.06),0 8px 28px rgba(31,31,31,0.08)">
+        <div class="w-11 h-11 rounded-xl flex items-center justify-center mb-5" style="background:rgba(212,102,74,0.10)">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <circle cx="8" cy="8" r="3.5" stroke="#D4664A" stroke-width="1.6"/>
+            <circle cx="16" cy="6" r="2.5" stroke="#D4664A" stroke-width="1.6"/>
+            <circle cx="16" cy="16" r="2.5" stroke="#D4664A" stroke-width="1.6"/>
+            <path d="M11.5 8.5L13.5 7M11.5 10l2 4.5" stroke="#D4664A" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3 class="font-semibold text-heading mb-2" style="font-size:17px;letter-spacing:-0.01em">Share & Collaborate</h3>
+        <p class="text-body" style="font-size:14px;line-height:1.7">Invite your travel companions to view or co-edit the itinerary in real time — everyone stays on the same page.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works" class="py-16" style="background:#F5F4F0">
+  <div class="max-w-6xl mx-auto px-5">
+    <div class="text-center mb-14">
+      <div class="inline-block mb-3 px-3 py-1 rounded-full" style="background:rgba(212,102,74,0.08);font-size:12.5px;font-weight:600;color:#D4664A;letter-spacing:0.04em;text-transform:uppercase">How it works</div>
+      <h2 class="font-display font-semibold text-heading mb-4" style="font-size:clamp(28px,4vw,40px);line-height:1.15;letter-spacing:-0.03em">From idea to itinerary<br>in three steps</h2>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-8">
+      <!-- Step 1 -->
+      <div class="relative">
+        <div class="hidden md:block step-line"></div>
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5 font-display font-semibold" style="background:#D4664A;color:#fff;font-size:20px;box-shadow:0 4px 14px rgba(212,102,74,0.35)">1</div>
+        <h3 class="font-semibold text-heading mb-2" style="font-size:18px;letter-spacing:-0.01em">Create your trip</h3>
+        <p class="text-body" style="font-size:14px;line-height:1.7">Enter your destination, travel dates, and how many days you're staying. Roamly sets up your trip framework instantly.</p>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="relative">
+        <div class="hidden md:block step-line"></div>
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5 font-display font-semibold" style="background:#D4664A;color:#fff;font-size:20px;box-shadow:0 4px 14px rgba(212,102,74,0.35)">2</div>
+        <h3 class="font-semibold text-heading mb-2" style="font-size:18px;letter-spacing:-0.01em">Add your stops</h3>
+        <p class="text-body" style="font-size:14px;line-height:1.7">Drop in places you want to visit — hotels, restaurants, attractions, experiences — and assign them to a day.</p>
+      </div>
+
+      <!-- Step 3 -->
+      <div>
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-5 font-display font-semibold" style="background:#D4664A;color:#fff;font-size:20px;box-shadow:0 4px 14px rgba(212,102,74,0.35)">3</div>
+        <h3 class="font-semibold text-heading mb-2" style="font-size:18px;letter-spacing:-0.01em">Get your schedule</h3>
+        <p class="text-body" style="font-size:14px;line-height:1.7">Roamly times each stop, adds realistic travel gaps, and delivers a complete hour-by-hour plan for every day.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BANNER -->
+<section style="background:linear-gradient(135deg,#1F1F1F 0%,#2D2420 100%);padding:80px 20px;position:relative;overflow:hidden">
+  <div style="position:absolute;top:-60px;right:-60px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(212,102,74,0.15) 0%,transparent 70%);pointer-events:none"></div>
+  <div style="position:absolute;bottom:-80px;left:-40px;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(212,102,74,0.08) 0%,transparent 70%);pointer-events:none"></div>
+  <div class="max-w-2xl mx-auto text-center" style="position:relative;z-index:1">
+    <h2 class="font-display font-semibold mb-4" style="font-size:clamp(28px,4vw,42px);line-height:1.12;letter-spacing:-0.03em;color:#fff">Ready to plan your<br><em style="color:#D4664A;font-style:italic">next adventure?</em></h2>
+    <p style="font-size:16px;color:rgba(255,255,255,0.6);line-height:1.7;margin-bottom:32px">Join travelers who use Roamly to build perfectly timed itineraries for every trip.</p>
+    <a href="register.html" class="btn-primary" style="font-size:16px;padding:14px 32px">
+      Create Your Free Account
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer style="background:#1F1F1F;padding:40px 20px 32px;border-top:1px solid rgba(255,255,255,0.06)">
+  <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-2">
+      <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background:#D4664A">
+        <svg width="15" height="15" viewBox="0 0 18 18" fill="none">
+          <path d="M9 2C5.13 2 2 5.13 2 9s3.13 7 7 7 7-3.13 7-7-3.13-7-7-7z" stroke="white" stroke-width="1.4"/>
+          <path d="M9 5v4l3 2" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="font-display font-semibold" style="color:rgba(255,255,255,0.8);font-size:16px;letter-spacing:-0.01em">Roamly</span>
+    </div>
+    <div class="flex gap-6" style="font-size:13px;color:rgba(255,255,255,0.35)">
+      <a href="#" style="color:rgba(255,255,255,0.35);text-decoration:none;transition:color 0.15s" onmouseover="this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.color='rgba(255,255,255,0.35)'">Privacy</a>
+      <a href="#" style="color:rgba(255,255,255,0.35);text-decoration:none;transition:color 0.15s" onmouseover="this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.color='rgba(255,255,255,0.35)'">Terms</a>
+      <a href="#" style="color:rgba(255,255,255,0.35);text-decoration:none;transition:color 0.15s" onmouseover="this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.color='rgba(255,255,255,0.35)'">Contact</a>
+    </div>
+    <p style="font-size:12.5px;color:rgba(255,255,255,0.25)">© 2026 Roamly. All rights reserved.</p>
+  </div>
+</footer>
+
+</body>
+</html>

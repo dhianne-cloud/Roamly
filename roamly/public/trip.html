@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Roamly — Trip Itinerary</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #D4664A; --primary-hover: #BF5538;
+      --bg: #F5F4F0; --white: #FFFFFF;
+      --heading: #1F1F1F; --body: #6B7280;
+      --border: #E2E0DC; --input-border: #D8D6D2;
+      --placeholder: #ADADAD; --radius: 10px;
+    }
+    body { font-family: 'DM Sans', -apple-system, sans-serif; background: var(--bg); color: var(--heading); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
+    /* NAV */
+    .navbar { height: 60px; background: var(--white); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 28px; position: sticky; top: 0; z-index: 40; box-shadow: 0 1px 4px rgba(31,31,31,0.05); gap: 12px; }
+    .nav-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .nav-back { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--body); text-decoration: none; padding: 6px 10px; border-radius: 7px; transition: background .15s, color .15s; white-space: nowrap; flex-shrink: 0; }
+    .nav-back:hover { background: var(--bg); color: var(--heading); }
+    .nav-divider { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+    .nav-trip-name { font-size: 14px; font-weight: 600; color: var(--heading); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; flex-shrink: 0; }
+    .nav-logo-icon { width: 30px; height: 30px; border-radius: 8px; background: var(--primary); display: flex; align-items: center; justify-content: center; }
+    .nav-logo-name { font-family: 'Fraunces', Georgia, serif; font-size: 16px; font-weight: 600; color: var(--heading); letter-spacing: -0.02em; }
+
+    /* HERO */
+    .trip-hero { padding: 32px 28px 0; max-width: 1100px; margin: 0 auto; }
+    .hero-card { border-radius: 14px; overflow: hidden; margin-bottom: 28px; }
+    .hero-cover { height: 160px; display: flex; align-items: flex-end; padding: 20px 24px; position: relative; }
+    .hero-cover-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%); }
+    .hero-info { position: relative; z-index: 1; }
+    .hero-destination { font-family: 'Fraunces', Georgia, serif; font-size: 28px; font-weight: 600; color: #fff; letter-spacing: -0.02em; line-height: 1.1; }
+    .hero-sub { font-size: 13px; color: rgba(255,255,255,0.75); margin-top: 4px; }
+    .hero-meta-bar { background: var(--white); border: 1px solid var(--border); border-top: none; border-radius: 0 0 14px 14px; display: flex; align-items: center; padding: 14px 24px; gap: 24px; flex-wrap: wrap; }
+    .meta-item { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--body); }
+    .meta-item strong { color: var(--heading); font-weight: 600; }
+    .meta-sep { width: 1px; height: 16px; background: var(--border); }
+
+    /* MAIN LAYOUT */
+    .page-wrap { max-width: 1100px; margin: 0 auto; padding: 0 28px 80px; display: grid; grid-template-columns: 220px 1fr; gap: 24px; }
+
+    /* DAY SIDEBAR */
+    .day-sidebar { padding-top: 4px; }
+    .day-sidebar-title { font-size: 11px; font-weight: 600; color: var(--body); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px; padding: 0 2px; }
+    .day-btn { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 9px; border: none; background: none; cursor: pointer; text-align: left; font-family: 'DM Sans', sans-serif; transition: background .15s; margin-bottom: 4px; }
+    .day-btn:hover { background: rgba(0,0,0,0.04); }
+    .day-btn.active { background: var(--white); border: 1px solid var(--border); box-shadow: 0 1px 4px rgba(31,31,31,0.06); }
+    .day-btn-num { width: 28px; height: 28px; border-radius: 8px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--body); flex-shrink: 0; transition: background .15s, color .15s; }
+    .day-btn.active .day-btn-num { background: var(--primary); color: #fff; }
+    .day-btn-info { min-width: 0; }
+    .day-btn-label { font-size: 13px; font-weight: 500; color: var(--heading); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .day-btn-count { font-size: 11.5px; color: var(--body); }
+
+    /* ITINERARY PANEL */
+    .itin-panel { min-width: 0; }
+    .itin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; gap: 12px; flex-wrap: wrap; }
+    .itin-day-title { font-family: 'Fraunces', Georgia, serif; font-size: 22px; font-weight: 600; color: var(--heading); letter-spacing: -0.02em; }
+    .itin-day-date { font-size: 13px; color: var(--body); margin-top: 2px; }
+    .itin-actions { display: flex; gap: 8px; }
+
+    /* BUTTONS */
+    .btn-primary { display: inline-flex; align-items: center; gap: 6px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 9px 16px; cursor: pointer; transition: background .18s, box-shadow .18s, transform .1s; box-shadow: 0 2px 6px rgba(212,102,74,0.25); white-space: nowrap; }
+    .btn-primary:hover { background: var(--primary-hover); box-shadow: 0 4px 12px rgba(212,102,74,0.35); }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-outline { display: inline-flex; align-items: center; gap: 6px; background: var(--white); color: var(--heading); border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 9px 16px; cursor: pointer; transition: background .15s, border-color .15s; white-space: nowrap; }
+    .btn-outline:hover { background: var(--bg); border-color: #C8C5BF; }
+
+    /* STOP CARD */
+    .stops-list { display: flex; flex-direction: column; gap: 0; }
+    .stop-item { display: flex; gap: 14px; position: relative; padding-bottom: 6px; }
+    .stop-item:not(:last-child) .stop-line { display: block; }
+    .stop-left { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 40px; }
+    .stop-dot { width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; border: 1px solid var(--border); background: var(--white); }
+    .stop-line { display: none; width: 2px; background: var(--border); flex: 1; min-height: 20px; margin: 4px 0; }
+    .stop-travel-gap { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--placeholder); padding: 4px 0 4px 8px; }
+    .stop-right { flex: 1; min-width: 0; background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; transition: box-shadow .18s; }
+    .stop-right:hover { box-shadow: 0 2px 10px rgba(31,31,31,0.07); }
+    .stop-time { font-size: 11.5px; font-weight: 600; color: var(--primary); letter-spacing: 0.02em; margin-bottom: 2px; }
+    .stop-name { font-size: 14px; font-weight: 600; color: var(--heading); letter-spacing: -0.01em; }
+    .stop-meta { font-size: 12px; color: var(--body); margin-top: 3px; }
+    .stop-row-actions { display: flex; gap: 6px; margin-top: 8px; }
+    .stop-action-btn { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--body); background: var(--bg); border: none; border-radius: 6px; padding: 4px 9px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background .15s, color .15s; }
+    .stop-action-btn:hover { background: #ECEAE6; color: var(--heading); }
+    .stop-action-btn.danger:hover { background: #FEF2F2; color: #DC2626; }
+    .stop-action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .stop-action-btn:disabled:hover { background: var(--bg); color: var(--body); }
+
+    /* TRAVEL CONNECTOR */
+    .travel-connector { display: flex; align-items: center; gap: 8px; padding: 4px 0 4px 54px; margin-bottom: 4px; }
+    .travel-line { flex: 1; height: 1px; background: var(--border); max-width: 40px; }
+    .travel-label { font-size: 11.5px; color: var(--placeholder); display: flex; align-items: center; gap: 4px; }
+
+    /* EMPTY DAY */
+    .empty-day { text-align: center; padding: 60px 20px; background: var(--white); border: 1.5px dashed var(--border); border-radius: 14px; }
+    .empty-day-title { font-size: 15px; font-weight: 600; color: var(--heading); margin-bottom: 6px; }
+    .empty-day-sub { font-size: 13px; color: var(--body); line-height: 1.6; margin-bottom: 20px; }
+
+    /* MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(31,31,31,0.45); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; animation: fadeIn .18s ease; }
+    @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+    .modal-card { background: var(--white); border-radius: 14px; width: 100%; max-width: 460px; box-shadow: 0 8px 40px rgba(31,31,31,0.18); animation: slideUp .22s ease; overflow: hidden; }
+    @keyframes slideUp { from { opacity:0; transform:translateY(18px) } to { opacity:1; transform:translateY(0) } }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 22px 16px; border-bottom: 1px solid var(--border); }
+    .modal-header h2 { font-family: 'Fraunces', Georgia, serif; font-size: 19px; font-weight: 600; color: var(--heading); letter-spacing: -0.02em; }
+    .modal-close { width: 30px; height: 30px; border-radius: 7px; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--body); transition: background .15s; }
+    .modal-close:hover { background: var(--bg); }
+    .modal-body-inner { padding: 20px 22px; }
+    .modal-footer { padding: 0 22px 20px; display: flex; gap: 10px; }
+    .field-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .field-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .field-row-2 .field-group { margin-bottom: 0; }
+    label { font-size: 13px; font-weight: 500; color: var(--heading); }
+    input[type="text"], input[type="number"], select, textarea {
+      width: 100%; padding: 0 12px; height: 40px;
+      border: 1px solid var(--input-border); border-radius: 8px;
+      background: var(--white); font-family: 'DM Sans', sans-serif;
+      font-size: 14px; color: var(--heading); outline: none;
+      transition: border-color .18s, box-shadow .18s;
+    }
+    textarea { height: auto; padding: 10px 12px; resize: vertical; min-height: 70px; }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(212,102,74,0.13); }
+    input::placeholder, textarea::placeholder { color: var(--placeholder); }
+    select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%236B7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; cursor: pointer; }
+    .btn-cancel { flex: 1; height: 40px; background: var(--bg); color: var(--body); border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background .15s; }
+    .btn-cancel:hover { background: #ECEAE6; }
+    .btn-submit { flex: 2; height: 40px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background .18s; box-shadow: 0 2px 6px rgba(212,102,74,0.25); }
+    .btn-submit:hover { background: var(--primary-hover); }
+    .btn-submit.loading { opacity: 0.72; cursor: not-allowed; pointer-events: none; }
+    .error-msg { font-size: 13px; color: #DC2626; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 9px 12px; margin-bottom: 12px; }
+
+    /* EMOJI PICKER */
+    .emoji-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+    .emoji-opt { width: 36px; height: 36px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--white); cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: border-color .15s, background .15s; }
+    .emoji-opt.selected { border-color: var(--primary); background: rgba(212,102,74,0.08); }
+    .emoji-opt:hover { border-color: var(--primary); }
+
+    /* SUGGESTIONS PANEL */
+    .suggest-panel { background: var(--white); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 20px; overflow: hidden; animation: slideUp .22s ease; }
+    .suggest-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px 10px; border-bottom: 1px solid var(--border); }
+    .suggest-panel-title { font-size: 13px; font-weight: 600; color: var(--heading); display: flex; align-items: center; gap: 7px; }
+    .suggest-badge { font-size: 10.5px; font-weight: 600; background: rgba(212,102,74,0.1); color: var(--primary); border-radius: 5px; padding: 2px 7px; letter-spacing: 0.03em; text-transform: uppercase; }
+    .suggest-close-btn { width: 28px; height: 28px; border-radius: 7px; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--body); transition: background .15s; }
+    .suggest-close-btn:hover { background: var(--bg); }
+    .suggest-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 14px 18px 16px; }
+    @media (max-width: 800px) { .suggest-grid { grid-template-columns: repeat(2, 1fr); } }
+    .suggest-card { border: 1px solid var(--border); border-radius: 10px; padding: 12px; cursor: pointer; transition: border-color .18s, box-shadow .18s, transform .12s; background: var(--bg); }
+    .suggest-card:hover { border-color: var(--primary); box-shadow: 0 3px 12px rgba(212,102,74,0.15); transform: translateY(-1px); }
+    .suggest-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+    .suggest-emoji { font-size: 20px; }
+    .suggest-name { font-size: 13px; font-weight: 600; color: var(--heading); line-height: 1.25; }
+    .suggest-desc { font-size: 11.5px; color: var(--body); line-height: 1.5; margin-bottom: 8px; }
+    .suggest-meta { display: flex; align-items: center; justify-content: space-between; }
+    .suggest-duration { font-size: 11px; color: var(--body); background: var(--white); border: 1px solid var(--border); border-radius: 5px; padding: 2px 7px; }
+    .suggest-add-btn { font-size: 11.5px; font-weight: 600; color: var(--primary); background: none; border: none; cursor: pointer; padding: 0; font-family: 'DM Sans', sans-serif; transition: color .15s; }
+    .suggest-add-btn:hover { color: var(--primary-hover); }
+    /* Loading skeleton */
+    .suggest-skeleton { border-radius: 10px; background: linear-gradient(90deg, #ECEAE6 25%, #F5F4F0 50%, #ECEAE6 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; height: 100px; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    .suggest-error { padding: 16px 18px; font-size: 13px; color: var(--body); display: flex; align-items: center; gap: 8px; }
+
+    /* SUGGEST BUTTON */
+    .btn-suggest { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, rgba(212,102,74,0.1) 0%, rgba(212,102,74,0.05) 100%); color: var(--primary); border: 1px solid rgba(212,102,74,0.25); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 9px 14px; cursor: pointer; transition: background .18s, border-color .18s, transform .1s; white-space: nowrap; }
+    .btn-suggest:hover { background: rgba(212,102,74,0.15); border-color: rgba(212,102,74,0.4); }
+    .btn-suggest:active { transform: scale(0.98); }
+    .btn-suggest.loading { opacity: 0.65; cursor: not-allowed; pointer-events: none; }
+
+    @media (max-width: 700px) {
+      .page-wrap { grid-template-columns: 1fr; }
+      .day-sidebar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+      .day-btn { flex-shrink: 0; width: auto; padding: 8px 12px; }
+      .day-sidebar-title { display: none; }
+      .trip-hero, .page-wrap { padding-left: 16px; padding-right: 16px; }
+      .field-row-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<header class="navbar">
+  <div class="nav-left">
+    <a href="dashboard.html" class="nav-back">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      My Trips
+    </a>
+    <div class="nav-divider"></div>
+    <span class="nav-trip-name" id="nav-trip-name">Loading…</span>
+  </div>
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-icon">
+      <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
+        <path d="M9 2C5.13 2 2 5.13 2 9s3.13 7 7 7 7-3.13 7-7-3.13-7-7-7z" stroke="white" stroke-width="1.4"/>
+        <path d="M9 5v4l3 2" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <span class="nav-logo-name">Roamly</span>
+  </a>
+</header>
+
+<!-- HERO -->
+<div class="trip-hero" id="trip-hero" style="display:none">
+  <div class="hero-card">
+    <div class="hero-cover" id="hero-cover">
+      <div class="hero-cover-overlay"></div>
+      <div class="hero-info">
+        <div class="hero-destination" id="hero-destination">—</div>
+        <div class="hero-sub" id="hero-sub">—</div>
+      </div>
+    </div>
+    <div class="hero-meta-bar">
+      <div class="meta-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="2.5" width="11" height="10" rx="1.5" stroke="#9CA3AF" stroke-width="1.2"/><path d="M4.5 1v3M9.5 1v3M1.5 7h11" stroke="#9CA3AF" stroke-width="1.2" stroke-linecap="round"/></svg><span id="meta-dates">—</span></div>
+      <div class="meta-sep"></div>
+      <div class="meta-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="#9CA3AF" stroke-width="1.2"/><path d="M7 4.5V7l2 1.5" stroke="#9CA3AF" stroke-width="1.2" stroke-linecap="round"/></svg><strong id="meta-days">—</strong>&nbsp;days</div>
+      <div class="meta-sep"></div>
+      <div class="meta-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="5.5" cy="4.5" r="2" stroke="#9CA3AF" stroke-width="1.2"/><path d="M1.5 12c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="#9CA3AF" stroke-width="1.2" stroke-linecap="round"/><circle cx="10.5" cy="4" r="1.5" stroke="#9CA3AF" stroke-width="1.2"/><path d="M12.5 11.5c0-1.7-1.1-3-2.5-3.3" stroke="#9CA3AF" stroke-width="1.2" stroke-linecap="round"/></svg><span id="meta-travelers">—</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="page-wrap" id="page-wrap" style="display:none">
+
+  <!-- DAY SIDEBAR -->
+  <aside class="day-sidebar" id="day-sidebar">
+    <div class="day-sidebar-title">Days</div>
+  </aside>
+
+  <!-- ITINERARY PANEL -->
+  <section class="itin-panel" id="itin-panel">
+    <div class="itin-header">
+      <div>
+        <div class="itin-day-title" id="itin-day-title">Day 1</div>
+        <div class="itin-day-date" id="itin-day-date"></div>
+      </div>
+      <div class="itin-actions">
+        <button class="btn-suggest" id="suggest-btn">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1l1.5 3.5L12 5.5l-3 2.8.7 3.7L7 10.2 3.3 12l.7-3.7L1 5.5l3.5-1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          Suggest Stops
+        </button>
+        <button class="btn-outline" id="auto-schedule-btn">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.3"/><path d="M7 4v3l2 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Auto-schedule
+        </button>
+        <button class="btn-primary" id="add-stop-btn">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 2v9M2 6.5h9" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Add Stop
+        </button>
+      </div>
+    </div>
+    <div id="suggest-panel" style="display:none"></div>
+    <div id="stops-container"></div>
+  </section>
+</div>
+
+<!-- ADD / EDIT STOP MODAL -->
+<div id="stop-modal" class="modal-overlay" style="display:none">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 id="stop-modal-title">Add Stop</h2>
+      <button class="modal-close" id="stop-modal-close">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="modal-body-inner">
+      <div class="field-group">
+        <label>Icon</label>
+        <div class="emoji-grid" id="emoji-grid">
+          <button class="emoji-opt selected" data-emoji="📍">📍</button>
+          <button class="emoji-opt" data-emoji="🏨">🏨</button>
+          <button class="emoji-opt" data-emoji="🍽️">🍽️</button>
+          <button class="emoji-opt" data-emoji="☕">☕</button>
+          <button class="emoji-opt" data-emoji="🎭">🎭</button>
+          <button class="emoji-opt" data-emoji="🏛️">🏛️</button>
+          <button class="emoji-opt" data-emoji="🌿">🌿</button>
+          <button class="emoji-opt" data-emoji="🛍️">🛍️</button>
+          <button class="emoji-opt" data-emoji="⛩️">⛩️</button>
+          <button class="emoji-opt" data-emoji="🚂">🚂</button>
+          <button class="emoji-opt" data-emoji="✈️">✈️</button>
+          <button class="emoji-opt" data-emoji="🏖️">🏖️</button>
+          <button class="emoji-opt" data-emoji="🏔️">🏔️</button>
+          <button class="emoji-opt" data-emoji="🎡">🎡</button>
+          <button class="emoji-opt" data-emoji="🍦">🍦</button>
+          <button class="emoji-opt" data-emoji="🎵">🎵</button>
+        </div>
+      </div>
+      <div class="field-group">
+        <label for="stop-name">Place / Activity <span style="color:var(--primary)">*</span></label>
+        <input type="text" id="stop-name" placeholder="e.g. Senso-ji Temple" />
+      </div>
+      <div class="field-row-2">
+        <div class="field-group">
+          <label for="stop-duration">Duration (minutes)</label>
+          <input type="number" id="stop-duration" value="60" min="5" max="480" />
+        </div>
+        <div class="field-group">
+          <label for="stop-travel">Travel to next (min)</label>
+          <input type="number" id="stop-travel" value="20" min="0" max="240" />
+        </div>
+      </div>
+      <div class="field-group">
+        <label for="stop-notes">Notes <span style="color:var(--body);font-weight:400">(optional)</span></label>
+        <textarea id="stop-notes" placeholder="Booking info, tips, address…"></textarea>
+      </div>
+      <div id="stop-error" class="error-msg" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="stop-modal-cancel">Cancel</button>
+      <button class="btn-submit" id="stop-modal-submit">Add Stop</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getFirestore, doc, getDoc, collection, addDoc, getDocs, deleteDoc, updateDoc, query, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const app = initializeApp({
+    apiKey: "AIzaSyA9OR2w5FgjvAy_rcGtWpT5R6tBNg1goBg",
+    authDomain: "dhianne-ceb5c.firebaseapp.com",
+    projectId: "dhianne-ceb5c",
+    storageBucket: "dhianne-ceb5c.firebasestorage.app",
+    messagingSenderId: "393795711893",
+    appId: "1:393795711893:web:c8bd9c8eb8398f29c77c9c"
+  });
+  const db = getFirestore(app);
+
+  /* ── AUTH GUARD ── */
+  const session = JSON.parse(sessionStorage.getItem('roamly_session') || 'null');
+  if (!session) { window.location.href = 'login.html'; }
+
+  /* ── GET TRIP ID ── */
+  const tripId = new URLSearchParams(window.location.search).get('id');
+  if (!tripId) { window.location.href = 'dashboard.html'; }
+
+  /* ── STATE ── */
+  let trip = null;
+  let allStops = [];
+  let activeDay = 1;
+  let editingStopId = null;
+  let selectedEmoji = '📍';
+
+  /* ── HELPERS ── */
+  const PALETTES = [
+    { from: '#D4664A', to: '#B85A3E' }, { from: '#3B6E8F', to: '#2D5570' },
+    { from: '#4E7C59', to: '#3A5E42' }, { from: '#7C5C8F', to: '#5E4570' },
+    { from: '#8F6B3B', to: '#6E5030' }, { from: '#3B7C7A', to: '#2D5E5C' },
+  ];
+
+  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  }
+
+  function formatDateRange(start, end) {
+    if (!start) return 'Dates TBD';
+    const s = new Date(start + 'T00:00:00');
+    const e = end ? new Date(end + 'T00:00:00') : null;
+    const opts = { month: 'short', day: 'numeric' };
+    if (!e) return s.toLocaleDateString('en-US', opts);
+    return s.toLocaleDateString('en-US', opts) + ' – ' + e.toLocaleDateString('en-US', {...opts, year: 'numeric'});
+  }
+
+  function dayCount(start, end) {
+    if (!start || !end) return 1;
+    return Math.max(1, Math.round((new Date(end) - new Date(start)) / 86400000) + 1);
+  }
+
+  function dayDate(dayNum) {
+    if (!trip?.startDate) return '';
+    const d = new Date(trip.startDate + 'T00:00:00');
+    d.setDate(d.getDate() + dayNum - 1);
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+
+  function minutesToTime(minutes) {
+    const h = Math.floor(minutes / 60) % 24;
+    const m = minutes % 60;
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12 = h % 12 || 12;
+    return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+  }
+
+  /* ── AUTO SCHEDULE ── */
+  function autoSchedule(stops) {
+    let cursor = 9 * 60; // 9:00 AM in minutes
+    return stops.map(stop => {
+      const scheduled = { ...stop, scheduledTime: minutesToTime(cursor) };
+      cursor += parseInt(stop.duration || 60) + parseInt(stop.travelToNext || 20);
+      return scheduled;
+    });
+  }
+
+  /* ── LOAD TRIP ── */
+  async function loadTrip() {
+    try {
+      const snap = await getDoc(doc(db, 'trips', tripId));
+      if (!snap.exists()) { window.location.href = 'dashboard.html'; return; }
+      trip = { id: snap.id, ...snap.data() };
+
+      // Set nav
+      document.getElementById('nav-trip-name').textContent = trip.name || trip.destination;
+      document.title = `Roamly — ${trip.destination}`;
+
+      // Hero
+      const days = dayCount(trip.startDate, trip.endDate);
+      const pIdx = Math.abs(tripId.charCodeAt(0)) % PALETTES.length;
+      const p = PALETTES[pIdx];
+      document.getElementById('hero-cover').style.background = `linear-gradient(135deg, ${p.from} 0%, ${p.to} 100%)`;
+      document.getElementById('hero-destination').textContent = trip.destination;
+      document.getElementById('hero-sub').textContent = trip.name && trip.name !== trip.destination ? trip.name : '';
+      document.getElementById('meta-dates').textContent = formatDateRange(trip.startDate, trip.endDate);
+      document.getElementById('meta-days').textContent = days;
+      document.getElementById('meta-travelers').textContent = (trip.travelers || '1') + ' traveler' + (trip.travelers === '1' ? '' : 's');
+      document.getElementById('trip-hero').style.display = 'block';
+      document.getElementById('page-wrap').style.display = 'grid';
+
+      // Build day sidebar
+      buildDaySidebar(days);
+      await loadStops();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function buildDaySidebar(days) {
+    const sidebar = document.getElementById('day-sidebar');
+    const title = sidebar.querySelector('.day-sidebar-title');
+    sidebar.innerHTML = '';
+    sidebar.appendChild(title);
+    for (let i = 1; i <= days; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'day-btn' + (i === activeDay ? ' active' : '');
+      btn.dataset.day = i;
+      btn.innerHTML = `<div class="day-btn-num">${i}</div><div class="day-btn-info"><div class="day-btn-label">Day ${i}</div><div class="day-btn-count" id="day-count-${i}">${dayDate(i)}</div></div>`;
+      btn.addEventListener('click', () => selectDay(i));
+      sidebar.appendChild(btn);
+    }
+  }
+
+  function selectDay(day) {
+    activeDay = day;
+    document.querySelectorAll('.day-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.day) === day));
+    document.getElementById('itin-day-title').textContent = `Day ${day}`;
+    document.getElementById('itin-day-date').textContent = dayDate(day);
+    renderStops();
+  }
+
+  /* ── LOAD STOPS ── */
+  async function loadStops() {
+    try {
+      const q = query(collection(db, 'trips', tripId, 'stops'));
+      const snap = await getDocs(q);
+      allStops = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (a.order||0)-(b.order||0));
+    } catch (e) { allStops = []; }
+    selectDay(activeDay);
+  }
+
+  function renderStops() {
+    const dayStops = allStops.filter(s => s.day === activeDay);
+    const scheduled = autoSchedule(dayStops);
+    const container = document.getElementById('stops-container');
+
+    if (scheduled.length === 0) {
+      container.innerHTML = `
+        <div class="empty-day">
+          <div style="font-size:36px;margin-bottom:12px">🗺️</div>
+          <div class="empty-day-title">No stops for Day ${activeDay} yet</div>
+          <div class="empty-day-sub">Add hotels, restaurants, attractions — anything you want to do on this day.</div>
+          <button class="btn-primary" onclick="document.getElementById('add-stop-btn').click()">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 2v9M2 6.5h9" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+            Add First Stop
+          </button>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = `<div class="stops-list">${scheduled.map((stop, idx) => stopHTML(stop, idx, scheduled.length)).join('')}</div>`;
+
+    scheduled.forEach((stop, i) => {
+      document.getElementById('edit-'+stop.id)?.addEventListener('click', () => openStopModal(stop));
+      document.getElementById('del-'+stop.id)?.addEventListener('click', () => deleteStop(stop.id));
+      document.getElementById('up-'+stop.id)?.addEventListener('click', () => moveStop(stop.id, -1));
+      document.getElementById('down-'+stop.id)?.addEventListener('click', () => moveStop(stop.id, 1));
+    });
+  }
+
+  function stopHTML(stop, idx, total) {
+    const isLast = idx === total - 1;
+    const isFirst = idx === 0;
+    return `
+      <div class="stop-item">
+        <div class="stop-left">
+          <div class="stop-dot">${esc(stop.emoji || '📍')}</div>
+          ${!isLast ? '<div class="stop-line"></div>' : ''}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div class="stop-right">
+            <div class="stop-time">${stop.scheduledTime}</div>
+            <div class="stop-name">${esc(stop.name)}</div>
+            <div class="stop-meta">${stop.duration || 60} min${stop.notes ? ' · ' + esc(stop.notes) : ''}</div>
+            <div class="stop-row-actions">
+              <button class="stop-action-btn" id="up-${stop.id}" title="Move up" ${isFirst ? 'disabled' : ''}>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 7.5L6 4l3.5 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="stop-action-btn" id="down-${stop.id}" title="Move down" ${isLast ? 'disabled' : ''}>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="stop-action-btn" id="edit-${stop.id}">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8.5 1.5l2 2-7 7H1.5v-2l7-7z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Edit
+              </button>
+              <button class="stop-action-btn danger" id="del-${stop.id}">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 3h8M4.5 3V2h3v1M4.5 5v4M7.5 5v4M2.5 3l.6 6.5h5.8l.6-6.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Delete
+              </button>
+            </div>
+          </div>
+          ${!isLast ? `<div class="travel-connector"><div class="travel-line"></div><span class="travel-label">🚶 ${stop.travelToNext || 20} min travel</span></div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  /* ── REORDER STOPS ── */
+  async function moveStop(stopId, delta) {
+    const dayStops = allStops.filter(s => s.day === activeDay).sort((a,b) => (a.order||0)-(b.order||0));
+    const idx = dayStops.findIndex(s => s.id === stopId);
+    const swapIdx = idx + delta;
+    if (idx === -1 || swapIdx < 0 || swapIdx >= dayStops.length) return;
+    dayStops.forEach((s, i) => { s.order = i; });
+    [dayStops[idx].order, dayStops[swapIdx].order] = [dayStops[swapIdx].order, dayStops[idx].order];
+    try {
+      await Promise.all([
+        updateDoc(doc(db, 'trips', tripId, 'stops', dayStops[idx].id), { order: dayStops[idx].order }),
+        updateDoc(doc(db, 'trips', tripId, 'stops', dayStops[swapIdx].id), { order: dayStops[swapIdx].order }),
+      ]);
+    } catch (e) { console.error('Reorder failed:', e); }
+    await loadStops();
+  }
+
+  /* ── AUTO SCHEDULE BUTTON ── */
+  document.getElementById('auto-schedule-btn').addEventListener('click', async () => {
+    const dayStops = allStops.filter(s => s.day === activeDay);
+    if (dayStops.length === 0) return;
+    const btn = document.getElementById('auto-schedule-btn');
+    btn.textContent = 'Scheduled!';
+    setTimeout(() => { btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.3"/><path d="M7 4v3l2 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg> Auto-schedule'; }, 1500);
+    renderStops();
+  });
+
+  /* ── ADD/EDIT STOP MODAL ── */
+  function openStopModal(stop = null) {
+    editingStopId = stop ? stop.id : null;
+    document.getElementById('stop-modal-title').textContent = stop ? 'Edit Stop' : 'Add Stop';
+    document.getElementById('stop-modal-submit').textContent = stop ? 'Save Changes' : 'Add Stop';
+    document.getElementById('stop-name').value     = stop?.name || '';
+    document.getElementById('stop-duration').value = stop?.duration || 60;
+    document.getElementById('stop-travel').value   = stop?.travelToNext || 20;
+    document.getElementById('stop-notes').value    = stop?.notes || '';
+    document.getElementById('stop-error').style.display = 'none';
+    selectedEmoji = stop?.emoji || '📍';
+    document.querySelectorAll('.emoji-opt').forEach(btn => btn.classList.toggle('selected', btn.dataset.emoji === selectedEmoji));
+    document.getElementById('stop-modal').style.display = 'flex';
+    document.getElementById('stop-name').focus();
+  }
+
+  function closeStopModal() { document.getElementById('stop-modal').style.display = 'none'; editingStopId = null; }
+
+  document.getElementById('add-stop-btn').addEventListener('click',    () => openStopModal());
+  document.getElementById('stop-modal-close').addEventListener('click',  closeStopModal);
+  document.getElementById('stop-modal-cancel').addEventListener('click', closeStopModal);
+  document.getElementById('stop-modal').addEventListener('click', e => { if (e.target === document.getElementById('stop-modal')) closeStopModal(); });
+
+  /* Emoji picker */
+  document.getElementById('emoji-grid').addEventListener('click', e => {
+    const btn = e.target.closest('.emoji-opt'); if (!btn) return;
+    document.querySelectorAll('.emoji-opt').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedEmoji = btn.dataset.emoji;
+  });
+
+  document.getElementById('stop-modal-submit').addEventListener('click', async () => {
+    const name     = document.getElementById('stop-name').value.trim();
+    const duration = parseInt(document.getElementById('stop-duration').value) || 60;
+    const travel   = parseInt(document.getElementById('stop-travel').value) || 20;
+    const notes    = document.getElementById('stop-notes').value.trim();
+    const errEl    = document.getElementById('stop-error');
+    errEl.style.display = 'none';
+    if (!name) { errEl.textContent = 'Please enter a place or activity name.'; errEl.style.display = 'block'; return; }
+
+    const btn = document.getElementById('stop-modal-submit');
+    btn.classList.add('loading'); btn.disabled = true;
+    try {
+      const data = { day: activeDay, name, emoji: selectedEmoji, duration, travelToNext: travel, notes, order: editingStopId ? undefined : allStops.filter(s => s.day === activeDay).length };
+      if (editingStopId) {
+        await updateDoc(doc(db, 'trips', tripId, 'stops', editingStopId), { name, emoji: selectedEmoji, duration, travelToNext: travel, notes });
+      } else {
+        await addDoc(collection(db, 'trips', tripId, 'stops'), data);
+      }
+      closeStopModal();
+      await loadStops();
+    } catch (e) {
+      errEl.textContent = 'Something went wrong. Please try again.'; errEl.style.display = 'block';
+    } finally {
+      btn.classList.remove('loading'); btn.disabled = false;
+    }
+  });
+
+  async function deleteStop(id) {
+    await deleteDoc(doc(db, 'trips', tripId, 'stops', id)).catch(() => {});
+    await loadStops();
+  }
+
+  /* ── NEARBY-PLACE SUGGESTIONS (OpenStreetMap — free, keyless, no billing) ── */
+  let suggestionsCache = {}; // cache per day so we don't re-fetch
+  let poiCache = {}; // cache raw POIs per destination so switching days doesn't re-query Overpass
+
+  document.getElementById('suggest-btn').addEventListener('click', async () => {
+    const panel = document.getElementById('suggest-panel');
+    // Toggle off if already open with results
+    if (panel.style.display !== 'none' && !panel.querySelector('.suggest-skeleton')) {
+      panel.style.display = 'none';
+      return;
+    }
+    const cacheKey = `${trip?.destination}__day${activeDay}`;
+    if (suggestionsCache[cacheKey]) {
+      renderSuggestions(suggestionsCache[cacheKey]);
+      return;
+    }
+    showSuggestLoading();
+    try {
+      const suggestions = await fetchSuggestions(trip?.destination, activeDay);
+      suggestionsCache[cacheKey] = suggestions;
+      renderSuggestions(suggestions);
+    } catch (err) {
+      showSuggestError(err.message);
+    }
+  });
+
+  function showSuggestLoading() {
+    const panel = document.getElementById('suggest-panel');
+    panel.style.display = 'block';
+    const btn = document.getElementById('suggest-btn');
+    btn.classList.add('loading');
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="animation:spin .9s linear infinite"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.3" stroke-dasharray="20 10"/></svg> Finding stops…`;
+    panel.innerHTML = `
+      <div class="suggest-panel-header">
+        <div class="suggest-panel-title">📍 Nearby places <span class="suggest-badge">Map data</span></div>
+      </div>
+      <div class="suggest-grid">${Array(6).fill('<div class="suggest-skeleton"></div>').join('')}</div>`;
+  }
+
+  function renderSuggestions(suggestions) {
+    const btn = document.getElementById('suggest-btn');
+    btn.classList.remove('loading');
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1l1.5 3.5L12 5.5l-3 2.8.7 3.7L7 10.2 3.3 12l.7-3.7L1 5.5l3.5-1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg> Suggest Stops`;
+    const panel = document.getElementById('suggest-panel');
+    panel.style.display = 'block';
+    panel.innerHTML = `
+      <div class="suggest-panel-header">
+        <div class="suggest-panel-title">📍 Nearby for Day ${activeDay} <span class="suggest-badge">${esc(trip?.destination)}</span></div>
+        <button class="suggest-close-btn" id="suggest-panel-close">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2l8 8M10 2L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="suggest-grid">
+        ${suggestions.map(s => `
+          <div class="suggest-card" data-name="${esc(s.name)}" data-emoji="${esc(s.emoji)}" data-duration="${s.duration}" data-notes="${esc(s.description||'')}">
+            <div class="suggest-card-top">
+              <span class="suggest-emoji">${esc(s.emoji)}</span>
+              <span class="suggest-name">${esc(s.name)}</span>
+            </div>
+            <div class="suggest-desc">${esc(s.description)}</div>
+            <div class="suggest-meta">
+              <span class="suggest-duration">${s.duration} min</span>
+              <button class="suggest-add-btn">+ Add to Day</button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+    document.getElementById('suggest-panel-close')?.addEventListener('click', () => {
+      panel.style.display = 'none';
+    });
+    panel.querySelectorAll('.suggest-card').forEach(card => {
+      card.addEventListener('click', () => {
+        openStopModal();
+        document.getElementById('stop-name').value = card.dataset.name;
+        document.getElementById('stop-duration').value = card.dataset.duration;
+        document.getElementById('stop-notes').value = card.dataset.notes;
+        const emoji = card.dataset.emoji;
+        selectedEmoji = emoji;
+        document.querySelectorAll('.emoji-opt').forEach(b => b.classList.toggle('selected', b.dataset.emoji === emoji));
+      });
+    });
+  }
+
+  function showSuggestError(msg) {
+    const btn = document.getElementById('suggest-btn');
+    btn.classList.remove('loading');
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1l1.5 3.5L12 5.5l-3 2.8.7 3.7L7 10.2 3.3 12l.7-3.7L1 5.5l3.5-1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg> Suggest Stops`;
+    const panel = document.getElementById('suggest-panel');
+    panel.style.display = 'block';
+    panel.innerHTML = `
+      <div class="suggest-panel-header">
+        <div class="suggest-panel-title">📍 Nearby places <span class="suggest-badge">Map data</span></div>
+        <button class="suggest-close-btn" id="suggest-panel-close2">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2l8 8M10 2L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="suggest-error">⚠️ Couldn't load nearby places for this destination. Try a more specific name (e.g. "Kyoto, Japan").<br><small style="opacity:.7">${esc(msg)}</small></div>`;
+    document.getElementById('suggest-panel-close2')?.addEventListener('click', () => { panel.style.display = 'none'; });
+  }
+
+  /* Classify an OSM tag set into an emoji/duration/label for the suggestion card */
+  function classifyPOI(tags) {
+    const rules = [
+      [['tourism', 'attraction'], { emoji: '📍', duration: 90, label: 'Popular attraction' }],
+      [['tourism', 'museum'],     { emoji: '🏛️', duration: 120, label: 'Museum' }],
+      [['tourism', 'gallery'],    { emoji: '🎨', duration: 75,  label: 'Art gallery' }],
+      [['tourism', 'viewpoint'],  { emoji: '🌆', duration: 30,  label: 'Scenic viewpoint' }],
+      [['tourism', 'zoo'],        { emoji: '🦁', duration: 120, label: 'Zoo' }],
+      [['tourism', 'theme_park'], { emoji: '🎡', duration: 150, label: 'Theme park' }],
+      [['amenity', 'restaurant'], { emoji: '🍽️', duration: 60,  label: 'Restaurant' }],
+      [['amenity', 'cafe'],       { emoji: '☕', duration: 30,  label: 'Café' }],
+      [['leisure', 'park'],       { emoji: '🌿', duration: 45,  label: 'Park' }],
+      [['leisure', 'garden'],     { emoji: '🌸', duration: 40,  label: 'Garden' }],
+      [['historic', null],       { emoji: '🏰', duration: 60,  label: 'Historic site' }],
+      [['shop', null],           { emoji: '🛍️', duration: 45,  label: 'Shopping' }],
+    ];
+    for (const [[key, val], meta] of rules) {
+      if (tags[key] && (val === null || tags[key] === val)) return meta;
+    }
+    return { emoji: '📍', duration: 60, label: 'Point of interest' };
+  }
+
+  /* Deterministic shuffle so each day shows a different slice of the same POI pool without re-fetching */
+  function seededShuffle(arr, seed) {
+    const a = arr.slice();
+    let s = seed % 233280;
+    for (let i = a.length - 1; i > 0; i--) {
+      s = (s * 9301 + 49297) % 233280;
+      const j = Math.floor((s / 233280) * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  async function geocodeDestination(destination) {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(destination)}`);
+    if (!res.ok) throw new Error(`Geocoding failed (HTTP ${res.status})`);
+    const data = await res.json();
+    if (!data.length) throw new Error(`Could not find "${destination}" on the map`);
+    return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+  }
+
+  async function fetchNearbyPOIs(destination) {
+    if (poiCache[destination]) return poiCache[destination];
+    const { lat, lon } = await geocodeDestination(destination);
+    const overpassQuery = `[out:json][timeout:20];(
+      node["tourism"~"attraction|museum|gallery|viewpoint|zoo|theme_park"](around:3000,${lat},${lon});
+      node["amenity"~"restaurant|cafe"](around:1500,${lat},${lon});
+      node["leisure"~"park|garden"](around:2500,${lat},${lon});
+      node["historic"](around:3000,${lat},${lon});
+    );out body 60;`;
+    const res = await fetch('https://overpass.kumi.systems/api/interpreter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'data=' + encodeURIComponent(overpassQuery)
+    });
+    if (!res.ok) throw new Error(`Could not load nearby places (HTTP ${res.status})`);
+    const data = await res.json();
+    const seenNames = new Set();
+    const pois = [];
+    for (const el of data.elements || []) {
+      const name = el.tags?.name;
+      if (!name || seenNames.has(name)) continue;
+      seenNames.add(name);
+      pois.push({ name, ...classifyPOI(el.tags) });
+    }
+    poiCache[destination] = pois;
+    return pois;
+  }
+
+  async function fetchSuggestions(destination, day) {
+    const pois = await fetchNearbyPOIs(destination);
+    if (!pois.length) throw new Error(`No nearby places found for "${destination}"`);
+    const shuffled = seededShuffle(pois, day * 7919 + destination.length);
+    return shuffled.slice(0, 6).map(p => ({ name: p.name, emoji: p.emoji, duration: p.duration, description: p.label }));
+  }
+
+  /* ── INIT ── */
+  const auth = getAuth(app);
+  onAuthStateChanged(auth, user => {
+    if (user) {
+      loadTrip();
+    } else if (!session) {
+      window.location.href = 'login.html';
+    } else {
+      // session exists but Firebase auth not restored — load anyway
+      loadTrip();
+    }
+  });
+</script>
+</body>
+</html>

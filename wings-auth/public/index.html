@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wings for Growth – Mentor Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:       #D4664A;
+      --primary-hover: #BF5538;
+      --bg:            #F5F4F0;
+      --white:         #FFFFFF;
+      --heading:       #1F1F1F;
+      --body:          #6B6B6B;
+      --border:        #E2E0DC;
+      --input-border:  #D8D6D2;
+      --placeholder:   #ADADAD;
+      --overlay:       rgba(168, 166, 162, 0.72);
+      --radius:        5px;
+      --shadow:        0 4px 22px rgba(0,0,0,0.12);
+    }
+
+    html { font-size: 14px; }
+
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--heading);
+      min-height: 100vh;
+    }
+
+    /* ── NAVBAR ──────────────────────────────────────── */
+    .navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 28px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo { display: flex; align-items: center; }
+
+    .logo-img {
+      height: 40px;
+      width: auto;
+      display: block;
+    }
+
+    .help-link {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 13px;
+      color: var(--body);
+      text-decoration: none;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .help-link:hover { color: var(--heading); }
+
+    /* ── LAYOUT ──────────────────────────────────────── */
+    .main-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: calc(100vh - 54px);
+      padding: 68px 16px 60px;
+    }
+
+    /* ── VIEWS ───────────────────────────────────────── */
+    .view { display: none; width: 100%; max-width: 420px; }
+    .view.active { display: block; }
+
+    /* ── TYPOGRAPHY ──────────────────────────────────── */
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--heading);
+      line-height: 1.25;
+      margin-bottom: 7px;
+      letter-spacing: -0.01em;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--body);
+      line-height: 1.6;
+      margin-bottom: 24px;
+      font-weight: 400;
+    }
+
+    .body-text {
+      font-size: 14px;
+      color: var(--body);
+      line-height: 1.65;
+      font-weight: 400;
+    }
+
+    /* ── FORM ────────────────────────────────────────── */
+    form { display: flex; flex-direction: column; }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 13px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--heading);
+    }
+
+    .req-star { color: var(--primary); }
+
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      height: 38px;
+      padding: 0 11px;
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius);
+      background: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: var(--heading);
+      outline: none;
+      transition: border-color .18s, box-shadow .18s;
+    }
+    input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(212,102,74,0.13);
+    }
+    input::placeholder { color: var(--placeholder); font-size: 13.5px; }
+
+    /* eye button */
+    .input-icon-wrap { position: relative; }
+    .input-icon-wrap input { padding-right: 36px; }
+    .eye-btn {
+      position: absolute; right: 9px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; padding: 2px;
+      color: #C0BEBC; display: flex; align-items: center;
+    }
+    .eye-btn:hover { color: var(--body); }
+    .eye-btn svg { width: 16px; height: 16px; }
+
+    /* forgot link */
+    .forgot-link {
+      font-size: 13px;
+      color: var(--primary);
+      text-decoration: none;
+      margin-bottom: 11px;
+      display: inline-block;
+      font-weight: 400;
+    }
+    .forgot-link:hover { text-decoration: underline; }
+
+    /* remember me */
+    .remember-wrap {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 13px; color: var(--body);
+      cursor: pointer; margin-bottom: 14px; user-select: none;
+    }
+    .remember-wrap input[type="checkbox"] { display: none; }
+    .checkmark-box {
+      width: 13px; height: 13px;
+      border: 1.5px solid var(--input-border);
+      border-radius: 2px; background: var(--white); flex-shrink: 0;
+      position: relative; transition: background .15s, border-color .15s;
+    }
+    .remember-wrap input:checked + .checkmark-box { background: var(--primary); border-color: var(--primary); }
+    .remember-wrap input:checked + .checkmark-box::after {
+      content: ''; position: absolute; left: 2px; top: -1px;
+      width: 4px; height: 8px; border: 2px solid white;
+      border-top: none; border-left: none; transform: rotate(45deg);
+    }
+
+    /* primary button */
+    .btn-primary {
+      width: 100%; height: 40px;
+      background: var(--primary); color: var(--white);
+      border: none; border-radius: var(--radius);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px; font-weight: 500;
+      cursor: pointer; letter-spacing: 0.01em;
+      transition: background .18s, transform .1s;
+      margin-top: 3px;
+    }
+    .btn-primary:hover  { background: var(--primary-hover); }
+    .btn-primary:active { transform: scale(0.99); }
+    .btn-primary:disabled { background: #D8C5BC; cursor: not-allowed; }
+    .btn-primary.loading  { opacity: 0.72; cursor: not-allowed; pointer-events: none; }
+
+    /* links */
+    .link-primary { color: var(--primary); text-decoration: none; font-size: 14px; }
+    .link-primary:hover { text-decoration: underline; }
+
+    /* footer */
+    .form-footer { text-align: center; font-size: 13px; color: var(--body); margin-top: 11px; }
+
+    /* back link */
+    .back-link { display: block; text-align: center; margin-top: 10px; font-size: 13px; color: var(--primary); text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+
+    /* error */
+    .error-msg {
+      font-size: 13px; color: #DC2626;
+      background: #FEF2F2; border: 1px solid #FECACA;
+      border-radius: var(--radius); padding: 7px 10px;
+      margin-bottom: 6px; line-height: 1.5;
+    }
+
+    /* password requirements */
+    .pw-reqs { list-style: none; display: flex; flex-direction: column; gap: 7px; margin-bottom: 19px; }
+    .req-item { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--body); }
+    .req-check {
+      width: 13px; height: 13px;
+      border: 1.5px solid var(--input-border);
+      border-radius: 2px; background: var(--white); flex-shrink: 0;
+      position: relative; transition: background .15s, border-color .15s;
+    }
+    .req-item.met .req-check { background: var(--primary); border-color: var(--primary); }
+    .req-item.met .req-check::after {
+      content: ''; position: absolute; left: 2px; top: -1px;
+      width: 4px; height: 8px; border: 2px solid white;
+      border-top: none; border-left: none; transform: rotate(45deg);
+    }
+    .req-item.met { color: var(--heading); }
+
+    /* demo note */
+    .demo-note { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #C0BEBC; margin-top: 13px; }
+    .demo-link  { color: #C0BEBC; font-size: 11px; }
+    .demo-link:hover { color: var(--body); text-decoration: underline; }
+
+    /* modal */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: var(--overlay);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; animation: fadeIn .18s ease;
+    }
+    @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+
+    .modal-card {
+      background: var(--white); border-radius: 9px;
+      padding: 34px 30px 30px; width: 364px;
+      max-width: calc(100vw - 28px);
+      text-align: center; box-shadow: var(--shadow);
+      animation: slideUp .2s ease;
+    }
+    @keyframes slideUp {
+      from { opacity:0; transform:translateY(14px) }
+      to   { opacity:1; transform:translateY(0) }
+    }
+    .modal-check  { margin-bottom: 13px; display: flex; justify-content: center; }
+    .modal-title  { font-size: 18px; font-weight: 700; color: var(--heading); margin-bottom: 7px; }
+    .modal-body   { font-size: 13.5px; color: var(--body); line-height: 1.55; margin-bottom: 20px; white-space: nowrap; }
+    .modal-btn    { margin-top: 0; font-size: 13.5px; white-space: nowrap; }
+
+    @media (max-width: 460px) {
+      .main-wrap { padding: 36px 18px; }
+      h1 { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── NAVBAR ──────────────────────────────────────────────── -->
+  <nav class="navbar">
+    <div class="logo">
+      <img src="logo.png" alt="Wings for Growth" class="logo-img" />
+    </div>
+    <a href="#" class="help-link" id="help-link">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <circle cx="7" cy="7" r="6.2" stroke="#888" stroke-width="1.1"/>
+        <text x="7" y="10.6" text-anchor="middle" font-size="7.5" fill="#888" font-family="DM Sans,sans-serif" font-weight="600">i</text>
+      </svg>
+      Help Assistance
+    </a>
+  </nav>
+
+  <!-- ── MAIN ────────────────────────────────────────────────── -->
+  <main class="main-wrap">
+
+    <!-- VIEW: LOGIN -------------------------------------------- -->
+    <section id="view-login" class="view active">
+      <h1>Access Your Mentor Workspace</h1>
+      <p class="subtitle">Manage your sessions, connect with mentees, and stay on top of your upcoming commitments.</p>
+
+      <form id="form-login" novalidate>
+        <div class="field-group">
+          <label for="login-email">Email <span class="req-star">*</span></label>
+          <input type="email" id="login-email" placeholder="danielcarter@gmail.com" autocomplete="email" />
+        </div>
+        <div class="field-group">
+          <label for="login-password">Password <span class="req-star">*</span></label>
+          <div class="input-icon-wrap">
+            <input type="password" id="login-password" autocomplete="current-password" />
+            <button type="button" class="eye-btn" data-target="login-password">
+              <svg class="eye-icon" viewBox="0 0 20 20" fill="none"><path d="M1 10s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z" stroke="currentColor" stroke-width="1.4"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.4"/></svg>
+              <svg class="eye-off-icon" style="display:none" viewBox="0 0 20 20" fill="none"><path d="M3 3l14 14M7.5 7.6A4 4 0 0112.4 12.5M1 10s1.3-2.2 3.5-4M19 10s-3.5 6-9 6a8.3 8.3 0 01-3.5-.8" stroke="currentColor" stroke-width="1.4"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <a href="#" class="forgot-link" id="go-forgot">Forgot Password?</a>
+
+        <label class="remember-wrap">
+          <input type="checkbox" id="remember-me" />
+          <span class="checkmark-box"></span>
+          Remember Me
+        </label>
+
+        <div id="login-error" class="error-msg" style="display:none"></div>
+        <button type="submit" class="btn-primary" id="login-btn">Login</button>
+        <p class="form-footer">New to WINGS?&nbsp; <a href="#" class="link-primary" id="go-register">Register as a Mentor</a></p>
+      </form>
+    </section>
+
+    <!-- VIEW: REGISTER ------------------------------------------ -->
+    <section id="view-register" class="view">
+      <h1>Register as a Mentor</h1>
+      <p class="subtitle">Create your WINGS account to manage your sessions and connect with mentees.</p>
+
+      <form id="form-register" novalidate>
+        <div class="field-group">
+          <label for="reg-name">Full Name <span class="req-star">*</span></label>
+          <input type="text" id="reg-name" placeholder="Your full name" autocomplete="name" />
+        </div>
+        <div class="field-group">
+          <label for="reg-email">Email <span class="req-star">*</span></label>
+          <input type="email" id="reg-email" placeholder="danielcarter@gmail.com" autocomplete="email" />
+        </div>
+        <div class="field-group">
+          <label for="reg-password">Password <span class="req-star">*</span></label>
+          <div class="input-icon-wrap">
+            <input type="password" id="reg-password" autocomplete="new-password" />
+            <button type="button" class="eye-btn" data-target="reg-password">
+              <svg class="eye-icon" viewBox="0 0 20 20" fill="none"><path d="M1 10s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z" stroke="currentColor" stroke-width="1.4"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.4"/></svg>
+              <svg class="eye-off-icon" style="display:none" viewBox="0 0 20 20" fill="none"><path d="M3 3l14 14M7.5 7.6A4 4 0 0112.4 12.5M1 10s1.3-2.2 3.5-4M19 10s-3.5 6-9 6a8.3 8.3 0 01-3.5-.8" stroke="currentColor" stroke-width="1.4"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="field-group">
+          <label for="reg-confirm">Confirm Password <span class="req-star">*</span></label>
+          <div class="input-icon-wrap">
+            <input type="password" id="reg-confirm" autocomplete="new-password" />
+            <button type="button" class="eye-btn" data-target="reg-confirm">
+              <svg class="eye-icon" viewBox="0 0 20 20" fill="none"><path d="M1 10s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z" stroke="currentColor" stroke-width="1.4"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.4"/></svg>
+              <svg class="eye-off-icon" style="display:none" viewBox="0 0 20 20" fill="none"><path d="M3 3l14 14M7.5 7.6A4 4 0 0112.4 12.5M1 10s1.3-2.2 3.5-4M19 10s-3.5 6-9 6a8.3 8.3 0 01-3.5-.8" stroke="currentColor" stroke-width="1.4"/></svg>
+            </button>
+          </div>
+        </div>
+        <div id="reg-error" class="error-msg" style="display:none"></div>
+        <button type="submit" class="btn-primary" id="reg-btn">Register as a Mentor</button>
+        <p class="form-footer">Already have an account? <a href="#" class="link-primary" id="go-login-from-reg">Sign In</a></p>
+      </form>
+    </section>
+
+    <!-- VIEW: FORGOT PASSWORD ------------------------------------ -->
+    <section id="view-forgot" class="view">
+      <h1>Forgot your password?</h1>
+      <p class="subtitle">No worries. Enter your registered email address and we'll send you a link to reset your password.</p>
+
+      <form id="form-forgot" novalidate>
+        <div class="field-group">
+          <label for="forgot-email">Registered Email <span class="req-star">*</span></label>
+          <input type="email" id="forgot-email" placeholder="danielcarter@gmail.com" autocomplete="email" />
+        </div>
+        <div id="forgot-error" class="error-msg" style="display:none"></div>
+        <button type="submit" class="btn-primary" id="forgot-btn">Send reset link</button>
+      </form>
+    </section>
+
+    <!-- VIEW: HELP ON THE WAY ------------------------------------ -->
+    <section id="view-help" class="view">
+      <h1>Help is on the way</h1>
+      <p class="body-text">We're diligently searching our records to locate the WINGS account associated with [<strong id="help-email-display" style="color:var(--primary);font-weight:500"></strong>].</p>
+      <p class="body-text" style="margin-top:13px">Should we discover a match, you can expect an email from us containing detailed instructions. If you haven't received any communication within the next 15 minutes, please verify that you entered the correct email address and take a moment to check your spam folder as well.</p>
+      <button type="button" class="btn-primary" id="back-to-login-btn" style="margin-top:26px">Back to Login</button>
+      <p class="demo-note">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5.5" stroke="#C8C6C3" stroke-width="1"/><text x="6" y="9.5" text-anchor="middle" font-size="7" fill="#C8C6C3" font-family="DM Sans,sans-serif" font-weight="600">i</text></svg>
+        Demo only — <a href="#" class="demo-link" id="simulate-reset-link">simulate clicking the email reset link →</a>
+      </p>
+    </section>
+
+    <!-- VIEW: CREATE PASSWORD ------------------------------------ -->
+    <section id="view-create-password" class="view">
+      <h1>Create Your Password</h1>
+      <p class="subtitle">Set a new password to securely access your WINGS account and continue your journey.</p>
+
+      <form id="form-create-password" novalidate>
+        <div class="field-group">
+          <label for="new-password">Enter New Password <span class="req-star">*</span></label>
+          <div class="input-icon-wrap">
+            <input type="password" id="new-password" placeholder="Newpassword@01" autocomplete="new-password" />
+            <button type="button" class="eye-btn" data-target="new-password">
+              <svg class="eye-icon" viewBox="0 0 20 20" fill="none"><path d="M1 10s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z" stroke="currentColor" stroke-width="1.4"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.4"/></svg>
+              <svg class="eye-off-icon" style="display:none" viewBox="0 0 20 20" fill="none"><path d="M3 3l14 14M7.5 7.6A4 4 0 0112.4 12.5M1 10s1.3-2.2 3.5-4M19 10s-3.5 6-9 6a8.3 8.3 0 01-3.5-.8" stroke="currentColor" stroke-width="1.4"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <ul class="pw-reqs">
+          <li id="req-len"   class="req-item"><span class="req-check"></span> At least 8 characters</li>
+          <li id="req-lower" class="req-item"><span class="req-check"></span> One lowercase character</li>
+          <li id="req-upper" class="req-item"><span class="req-check"></span> One uppercase character</li>
+          <li id="req-spec"  class="req-item"><span class="req-check"></span> One number, symbol or whitespace character</li>
+        </ul>
+
+        <div id="create-pw-error" class="error-msg" style="display:none"></div>
+        <button type="submit" class="btn-primary" id="create-pw-btn">Continue</button>
+        <a href="#" class="back-link" id="back-to-forgot-from-create">Back</a>
+      </form>
+    </section>
+
+  </main>
+
+  <!-- ── MODAL: LOGIN SUCCESS ──────────────────────────────────── -->
+  <div id="modal-login-success" class="modal-overlay" style="display:none">
+    <div class="modal-card">
+      <div class="modal-check">
+        <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+          <circle cx="22" cy="22" r="22" fill="#EDFBF1"/>
+          <path d="M12 22l7 7 13-13" stroke="#4CAF50" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2 class="modal-title">Logged in successfully</h2>
+      <p class="modal-body">You're now logged in. Let's continue your mentorship journey.</p>
+      <button class="btn-primary modal-btn" id="redirect-dashboard-btn">Redirecting to your dashboard in <span id="login-countdown">5</span>sec..</button>
+    </div>
+  </div>
+
+  <!-- ── MODAL: PASSWORD CHANGED ───────────────────────────────── -->
+  <div id="modal-pw-changed" class="modal-overlay" style="display:none">
+    <div class="modal-card">
+      <div class="modal-check">
+        <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+          <circle cx="22" cy="22" r="22" fill="#EDFBF1"/>
+          <path d="M12 22l7 7 13-13" stroke="#4CAF50" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2 class="modal-title">Password Changed Successfully</h2>
+      <p class="modal-body">You can now log in with your new password and continue using the platform.</p>
+      <button class="btn-primary modal-btn" id="redirect-login-btn">Redirecting to Login screen in <span id="pw-countdown">7</span>sec..</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+    const app = initializeApp({
+      apiKey: "AIzaSyA9OR2w5FgjvAy_rcGtWpT5R6tBNg1goBg",
+      authDomain: "dhianne-ceb5c.firebaseapp.com",
+      projectId: "dhianne-ceb5c",
+      storageBucket: "dhianne-ceb5c.firebasestorage.app",
+      messagingSenderId: "393795711893",
+      appId: "1:393795711893:web:c8bd9c8eb8398f29c77c9c"
+    });
+    const auth = getAuth(app);
+
+    function firebaseError(code) {
+      const m = {
+        'auth/user-not-found':      'Invalid email or password.',
+        'auth/wrong-password':      'Invalid email or password.',
+        'auth/invalid-credential':  'Invalid email or password.',
+        'auth/invalid-email':       'Please enter a valid email address.',
+        'auth/user-disabled':       'This account has been disabled.',
+        'auth/email-already-in-use':'An account with this email already exists.',
+        'auth/weak-password':       'Password must be at least 6 characters.',
+        'auth/too-many-requests':   'Too many attempts. Please try again later.',
+      };
+      return m[code] || 'Something went wrong. Please try again.';
+    }
+
+    /* ── UI HELPERS ──────────────────────────────── */
+    let loginTimer = null, pwTimer = null;
+
+    function showView(id) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      ['login-error','reg-error','forgot-error','create-pw-error'].forEach(eid => {
+        const e = document.getElementById(eid); if (e) { e.textContent=''; e.style.display='none'; }
+      });
+    }
+    function showErr(id, msg) { const e=document.getElementById(id); if(!e)return; e.textContent=msg; e.style.display='block'; }
+    function setLoading(id, v) { const b=document.getElementById(id); if(!b)return; b.classList.toggle('loading',v); b.disabled=v; }
+    const showModal = id => { document.getElementById(id).style.display='flex'; };
+    const hideModal = id => { document.getElementById(id).style.display='none'; };
+    function startCountdown(spanId, sec, onDone) {
+      const span=document.getElementById(spanId); let n=sec; span.textContent=n;
+      return setInterval(() => { n--; span.textContent=n; if(n<=0) onDone(); }, 1000);
+    }
+
+    /* ── EYE TOGGLES ─────────────────────────────── */
+    document.querySelectorAll('.eye-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const inp=document.getElementById(btn.dataset.target), isP=inp.type==='password';
+        inp.type = isP ? 'text' : 'password';
+        btn.querySelector('.eye-icon').style.display = isP ? 'none' : '';
+        btn.querySelector('.eye-off-icon').style.display = isP ? '' : 'none';
+      });
+    });
+
+    /* ── NAV ─────────────────────────────────────── */
+    document.getElementById('go-forgot').addEventListener('click', e => { e.preventDefault(); showView('view-forgot'); });
+    document.getElementById('go-register').addEventListener('click', e => { e.preventDefault(); window.location.href='register.html'; });
+    document.getElementById('go-login-from-reg').addEventListener('click', e => { e.preventDefault(); showView('view-login'); });
+    document.getElementById('back-to-login-btn').addEventListener('click', () => showView('view-login'));
+    document.getElementById('back-to-forgot-from-create').addEventListener('click', e => { e.preventDefault(); showView('view-forgot'); });
+    document.getElementById('help-link').addEventListener('click', e => { e.preventDefault(); alert('For help, contact support@wingsforgrowth.org'); });
+
+    /* ── PASSWORD REQUIREMENTS ───────────────────── */
+    const newPwInput = document.getElementById('new-password');
+    const createPwBtn = document.getElementById('create-pw-btn');
+    function checkPwReqs(v) {
+      const c = { 'req-len':v.length>=8, 'req-lower':/[a-z]/.test(v), 'req-upper':/[A-Z]/.test(v), 'req-spec':/[\d\W\s]/.test(v) };
+      let all = true;
+      for (const [id, met] of Object.entries(c)) { document.getElementById(id).classList.toggle('met', met); if(!met) all=false; }
+      createPwBtn.disabled = !all; return all;
+    }
+    checkPwReqs('');
+    newPwInput.addEventListener('input', () => checkPwReqs(newPwInput.value));
+
+    /* ── FORM: LOGIN ─────────────────────────────── */
+    document.getElementById('form-login').addEventListener('submit', async e => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value.trim();
+      const pw = document.getElementById('login-password').value;
+      if (!email || !pw) { showErr('login-error', 'Please enter your email and password.'); return; }
+      setLoading('login-btn', true);
+      try {
+        const cred = await signInWithEmailAndPassword(auth, email, pw);
+        sessionStorage.setItem('wfg_session', JSON.stringify({
+          userId: cred.user.uid,
+          email: cred.user.email,
+          name: cred.user.displayName || cred.user.email.split('@')[0]
+        }));
+        showModal('modal-login-success');
+        if (loginTimer) clearInterval(loginTimer);
+        loginTimer = startCountdown('login-countdown', 5, () => { clearInterval(loginTimer); window.location.href='dashboard.html'; });
+      } catch(err) {
+        showErr('login-error', firebaseError(err.code));
+      } finally {
+        setLoading('login-btn', false);
+      }
+    });
+    document.getElementById('redirect-dashboard-btn').addEventListener('click', () => {
+      if (loginTimer) clearInterval(loginTimer); window.location.href='dashboard.html';
+    });
+
+    /* ── FORM: REGISTER (inline) ─────────────────── */
+    const regForm = document.getElementById('form-register');
+    if (regForm) {
+      regForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const name = document.getElementById('reg-name').value.trim();
+        const email = document.getElementById('reg-email').value.trim();
+        const pw = document.getElementById('reg-password').value;
+        const confirm = document.getElementById('reg-confirm').value;
+        if (!name||!email||!pw||!confirm) { showErr('reg-error','All fields are required.'); return; }
+        if (pw !== confirm) { showErr('reg-error','Passwords do not match.'); return; }
+        setLoading('reg-btn', true);
+        try {
+          const cred = await createUserWithEmailAndPassword(auth, email, pw);
+          await updateProfile(cred.user, { displayName: name });
+          sessionStorage.setItem('wfg_session', JSON.stringify({ userId: cred.user.uid, email: cred.user.email, name }));
+          showModal('modal-login-success');
+          if (loginTimer) clearInterval(loginTimer);
+          loginTimer = startCountdown('login-countdown', 5, () => { clearInterval(loginTimer); window.location.href='dashboard.html'; });
+        } catch(err) {
+          showErr('reg-error', firebaseError(err.code));
+        } finally {
+          setLoading('reg-btn', false);
+        }
+      });
+    }
+
+    /* ── FORM: FORGOT PASSWORD ───────────────────── */
+    document.getElementById('form-forgot').addEventListener('submit', async e => {
+      e.preventDefault();
+      const email = document.getElementById('forgot-email').value.trim();
+      if (!email) { showErr('forgot-error', 'Please enter your registered email address.'); return; }
+      setLoading('forgot-btn', true);
+      try { await sendPasswordResetEmail(auth, email); } catch(_) { /* don't reveal if email exists */ }
+      setLoading('forgot-btn', false);
+      document.getElementById('help-email-display').textContent = email;
+      showView('view-help');
+    });
+
+    /* ── REDIRECT LOGIN BTN ──────────────────────── */
+    document.getElementById('redirect-login-btn').addEventListener('click', () => {
+      if (pwTimer) clearInterval(pwTimer); hideModal('modal-pw-changed'); showView('view-login');
+    });
+  </script>
+</body>
+</html>

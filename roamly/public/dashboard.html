@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Roamly — My Trips</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #D4664A; --primary-hover: #BF5538;
+      --bg: #F5F4F0; --white: #FFFFFF;
+      --heading: #1F1F1F; --body: #6B7280;
+      --border: #E2E0DC; --input-border: #D8D6D2;
+      --placeholder: #ADADAD; --radius: 10px;
+    }
+    body { font-family: 'DM Sans', -apple-system, sans-serif; background: var(--bg); color: var(--heading); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
+    /* NAV */
+    .navbar { height: 60px; background: var(--white); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 28px; position: sticky; top: 0; z-index: 40; box-shadow: 0 1px 4px rgba(31,31,31,0.05); }
+    .nav-logo { display: flex; align-items: center; gap: 9px; text-decoration: none; }
+    .nav-logo-icon { width: 32px; height: 32px; border-radius: 9px; background: var(--primary); display: flex; align-items: center; justify-content: center; }
+    .nav-logo-name { font-family: 'Fraunces', Georgia, serif; font-size: 18px; font-weight: 600; color: var(--heading); letter-spacing: -0.02em; }
+    .nav-right { display: flex; align-items: center; gap: 14px; }
+    .nav-user { display: flex; align-items: center; gap: 9px; }
+    .nav-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #fff; flex-shrink: 0; }
+    .nav-name { font-size: 14px; font-weight: 500; color: var(--heading); }
+    .nav-signout { font-size: 13px; color: var(--body); background: none; border: none; cursor: pointer; padding: 6px 10px; border-radius: 6px; transition: background .15s, color .15s; font-family: 'DM Sans', sans-serif; }
+    .nav-signout:hover { background: rgba(0,0,0,0.05); color: var(--heading); }
+
+    /* PAGE */
+    .page-wrap { max-width: 1100px; margin: 0 auto; padding: 36px 24px 80px; }
+
+    /* PAGE HEADER */
+    .page-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 32px; gap: 16px; flex-wrap: wrap; }
+    .page-title { font-family: 'Fraunces', Georgia, serif; font-size: 32px; font-weight: 600; color: var(--heading); letter-spacing: -0.03em; line-height: 1.1; }
+    .page-title span { color: var(--primary); font-style: italic; }
+    .page-subtitle { font-size: 14px; color: var(--body); margin-top: 5px; line-height: 1.5; }
+
+    /* NEW TRIP BUTTON */
+    .btn-new-trip { display: inline-flex; align-items: center; gap: 7px; background: var(--primary); color: #fff; border: none; border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 10px 20px; cursor: pointer; transition: background .18s, box-shadow .18s, transform .1s; box-shadow: 0 2px 8px rgba(212,102,74,0.30); white-space: nowrap; }
+    .btn-new-trip:hover { background: var(--primary-hover); box-shadow: 0 4px 14px rgba(212,102,74,0.40); }
+    .btn-new-trip:active { transform: scale(0.98); }
+    .btn-new-trip:focus-visible { outline: 3px solid rgba(212,102,74,0.40); outline-offset: 2px; }
+
+    /* FILTER TABS */
+    .filter-tabs { display: flex; gap: 6px; margin-bottom: 24px; }
+    .tab-btn { padding: 7px 16px; border-radius: 20px; border: 1px solid var(--border); background: var(--white); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--body); cursor: pointer; transition: background .15s, color .15s, border-color .15s; }
+    .tab-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    /* TRIP GRID */
+    .trips-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+
+    /* TRIP CARD */
+    .trip-card { background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; cursor: pointer; transition: transform .22s cubic-bezier(0.34,1.56,0.64,1), box-shadow .22s ease; display: flex; flex-direction: column; }
+    .trip-card:hover { transform: translateY(-4px); box-shadow: 0 4px 16px rgba(212,102,74,0.12), 0 12px 40px rgba(31,31,31,0.10); }
+    .trip-card-cover { height: 130px; position: relative; display: flex; align-items: flex-end; padding: 14px; }
+    .trip-card-cover-inner { position: absolute; inset: 0; }
+    .trip-badge { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.18); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 4px 10px; font-size: 11.5px; font-weight: 500; color: #fff; }
+    .trip-card-body { padding: 16px 18px 18px; flex: 1; display: flex; flex-direction: column; }
+    .trip-destination { font-size: 17px; font-weight: 700; color: var(--heading); letter-spacing: -0.01em; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .trip-name { font-size: 13px; color: var(--body); margin-bottom: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .trip-meta { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+    .trip-meta-item { display: flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--body); }
+    .trip-meta-item svg { flex-shrink: 0; }
+    .trip-actions { display: flex; gap: 8px; margin-top: auto; }
+    .btn-view-trip { flex: 1; height: 36px; background: var(--primary); color: #fff; border: none; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: background .15s; }
+    .btn-view-trip:hover { background: var(--primary-hover); }
+    .btn-icon { width: 36px; height: 36px; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .15s, border-color .15s; flex-shrink: 0; }
+    .btn-icon:hover { background: #ECEAE6; border-color: #C8C5BF; }
+
+    /* EMPTY STATE */
+    .empty-state { text-align: center; padding: 80px 20px; }
+    .empty-icon { display: flex; justify-content: center; margin-bottom: 20px; }
+    .empty-title { font-family: 'Fraunces', Georgia, serif; font-size: 22px; font-weight: 600; color: var(--heading); margin-bottom: 8px; letter-spacing: -0.02em; }
+    .empty-body { font-size: 14px; color: var(--body); line-height: 1.65; max-width: 340px; margin: 0 auto 24px; }
+
+    /* LOADING */
+    .loading-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+    .skeleton { background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+    .skeleton-cover { height: 130px; background: linear-gradient(90deg, #ECEAE6 25%, #F3F1ED 50%, #ECEAE6 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+    .skeleton-body { padding: 16px 18px 18px; }
+    .skeleton-line { height: 12px; border-radius: 6px; background: linear-gradient(90deg, #ECEAE6 25%, #F3F1ED 50%, #ECEAE6 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; margin-bottom: 10px; }
+    @keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+
+    /* MODAL OVERLAY */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(31,31,31,0.45); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; animation: fadeIn .18s ease; }
+    @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+    .modal-card { background: var(--white); border-radius: 14px; width: 100%; max-width: 480px; box-shadow: 0 8px 40px rgba(31,31,31,0.18); animation: slideUp .22s ease; overflow: hidden; }
+    @keyframes slideUp { from { opacity:0; transform:translateY(18px) } to { opacity:1; transform:translateY(0) } }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 22px 24px 18px; border-bottom: 1px solid var(--border); }
+    .modal-header h2 { font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 600; color: var(--heading); letter-spacing: -0.02em; }
+    .modal-close { width: 32px; height: 32px; border-radius: 8px; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--body); transition: background .15s; }
+    .modal-close:hover { background: var(--bg); color: var(--heading); }
+    .modal-body-inner { padding: 22px 24px; }
+    .modal-footer { padding: 0 24px 22px; display: flex; gap: 10px; }
+
+    /* FORM */
+    .field-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px; }
+    .field-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .field-row-2 .field-group { margin-bottom: 0; }
+    label { font-size: 13px; font-weight: 500; color: var(--heading); }
+    input[type="text"], input[type="date"], input[type="number"], select {
+      width: 100%; height: 42px; padding: 0 12px;
+      border: 1px solid var(--input-border); border-radius: 8px;
+      background: var(--white); font-family: 'DM Sans', sans-serif;
+      font-size: 14px; color: var(--heading); outline: none;
+      transition: border-color .18s, box-shadow .18s;
+    }
+    input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(212,102,74,0.13); }
+    input::placeholder { color: var(--placeholder); }
+    select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%236B7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; cursor: pointer; }
+
+    .btn-cancel { flex: 1; height: 42px; background: var(--bg); color: var(--body); border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background .15s; }
+    .btn-cancel:hover { background: #ECEAE6; }
+    .btn-submit { flex: 2; height: 42px; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background .18s, box-shadow .18s; box-shadow: 0 2px 8px rgba(212,102,74,0.25); }
+    .btn-submit:hover { background: var(--primary-hover); }
+    .btn-submit:disabled { background: #D8C5BC; cursor: not-allowed; box-shadow: none; }
+    .btn-submit.loading { opacity: 0.72; cursor: not-allowed; pointer-events: none; }
+
+    .error-msg { font-size: 13px; color: #DC2626; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 9px 12px; margin-bottom: 12px; line-height: 1.5; }
+
+    /* DELETE CONFIRM */
+    .confirm-overlay { position: fixed; inset: 0; background: rgba(31,31,31,0.45); display: flex; align-items: center; justify-content: center; z-index: 110; padding: 20px; animation: fadeIn .15s ease; }
+    .confirm-card { background: var(--white); border-radius: 12px; width: 100%; max-width: 360px; padding: 28px 24px 24px; text-align: center; box-shadow: 0 8px 40px rgba(31,31,31,0.18); animation: slideUp .2s ease; }
+    .confirm-title { font-family: 'Fraunces', Georgia, serif; font-size: 18px; font-weight: 600; color: var(--heading); margin-bottom: 8px; letter-spacing: -0.02em; }
+    .confirm-body { font-size: 13.5px; color: var(--body); line-height: 1.6; margin-bottom: 20px; }
+    .confirm-btns { display: flex; gap: 10px; }
+    .btn-danger { flex: 1; height: 40px; background: #DC2626; color: #fff; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background .15s; }
+    .btn-danger:hover { background: #B91C1C; }
+
+    @media (max-width: 600px) {
+      .page-header { align-items: flex-start; flex-direction: column; }
+      .filter-tabs { overflow-x: auto; padding-bottom: 4px; }
+      .field-row-2 { grid-template-columns: 1fr; }
+      .navbar { padding: 0 16px; }
+      .page-wrap { padding: 24px 16px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<header class="navbar">
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-icon">
+      <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+        <path d="M9 2C5.13 2 2 5.13 2 9s3.13 7 7 7 7-3.13 7-7-3.13-7-7-7z" stroke="white" stroke-width="1.4"/>
+        <path d="M9 5v4l3 2" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <span class="nav-logo-name">Roamly</span>
+  </a>
+  <div class="nav-right">
+    <div class="nav-user">
+      <div class="nav-avatar" id="nav-avatar">?</div>
+      <span class="nav-name" id="nav-name">Loading…</span>
+    </div>
+    <button class="nav-signout" id="signout-btn">Sign out</button>
+  </div>
+</header>
+
+<!-- PAGE -->
+<main class="page-wrap">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">My <span>Trips</span></h1>
+      <p class="page-subtitle" id="trip-count-label">Loading your trips…</p>
+    </div>
+    <button class="btn-new-trip" id="new-trip-btn">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 2v11M2 7.5h11" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+      New Trip
+    </button>
+  </div>
+
+  <div class="filter-tabs" id="filter-tabs">
+    <button class="tab-btn active" data-filter="all">All trips</button>
+    <button class="tab-btn" data-filter="upcoming">Upcoming</button>
+    <button class="tab-btn" data-filter="past">Past</button>
+  </div>
+
+  <!-- LOADING SKELETON -->
+  <div class="loading-grid" id="loading-state">
+    <div class="skeleton"><div class="skeleton-cover"></div><div class="skeleton-body"><div class="skeleton-line" style="width:60%"></div><div class="skeleton-line" style="width:40%"></div><div class="skeleton-line" style="width:80%"></div></div></div>
+    <div class="skeleton"><div class="skeleton-cover"></div><div class="skeleton-body"><div class="skeleton-line" style="width:55%"></div><div class="skeleton-line" style="width:35%"></div><div class="skeleton-line" style="width:75%"></div></div></div>
+    <div class="skeleton"><div class="skeleton-cover"></div><div class="skeleton-body"><div class="skeleton-line" style="width:65%"></div><div class="skeleton-line" style="width:45%"></div><div class="skeleton-line" style="width:70%"></div></div></div>
+  </div>
+
+  <!-- TRIPS GRID -->
+  <div class="trips-grid" id="trips-grid" style="display:none"></div>
+
+  <!-- EMPTY STATE -->
+  <div class="empty-state" id="empty-state" style="display:none">
+    <div class="empty-icon">
+      <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+        <circle cx="40" cy="40" r="40" fill="rgba(212,102,74,0.07)"/>
+        <path d="M25 52h30M25 42h30M25 32h30" stroke="#D4664A" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+        <circle cx="40" cy="28" r="10" stroke="#D4664A" stroke-width="2"/>
+        <path d="M40 24v4l3 2" stroke="#D4664A" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <h2 class="empty-title">No trips yet</h2>
+    <p class="empty-body">Start planning your first adventure. Add your destination, dates, and Roamly will build your itinerary.</p>
+    <button class="btn-new-trip" id="empty-new-trip-btn">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 2v11M2 7.5h11" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+      Create My First Trip
+    </button>
+  </div>
+
+</main>
+
+<!-- CREATE / EDIT TRIP MODAL -->
+<div id="trip-modal" class="modal-overlay" style="display:none">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 id="modal-title">New Trip</h2>
+      <button class="modal-close" id="modal-close-btn">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="modal-body-inner">
+      <div class="field-group">
+        <label for="trip-destination">Destination <span style="color:var(--primary)">*</span></label>
+        <input type="text" id="trip-destination" placeholder="e.g. Tokyo, Japan" />
+      </div>
+      <div class="field-group">
+        <label for="trip-name">Trip name <span style="color:var(--body);font-weight:400">(optional)</span></label>
+        <input type="text" id="trip-name" placeholder="e.g. Summer Adventure" />
+      </div>
+      <div class="field-row-2">
+        <div class="field-group">
+          <label for="trip-start">Start date <span style="color:var(--primary)">*</span></label>
+          <input type="date" id="trip-start" />
+        </div>
+        <div class="field-group">
+          <label for="trip-end">End date <span style="color:var(--primary)">*</span></label>
+          <input type="date" id="trip-end" />
+        </div>
+      </div>
+      <div class="field-group">
+        <label for="trip-travelers">Number of travelers</label>
+        <select id="trip-travelers">
+          <option value="1">1 — Solo</option>
+          <option value="2" selected>2 — Couple</option>
+          <option value="3">3 people</option>
+          <option value="4">4 people</option>
+          <option value="5">5 people</option>
+          <option value="6+">6+ people</option>
+        </select>
+      </div>
+      <div id="modal-error" class="error-msg" style="display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="modal-cancel-btn">Cancel</button>
+      <button class="btn-submit" id="modal-submit-btn">Create Trip</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div id="confirm-modal" class="confirm-overlay" style="display:none">
+  <div class="confirm-card">
+    <div style="display:flex;justify-content:center;margin-bottom:14px">
+      <div style="width:44px;height:44px;border-radius:50%;background:#FEF2F2;display:flex;align-items:center;justify-content:center">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="#DC2626" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+    <p class="confirm-title">Delete this trip?</p>
+    <p class="confirm-body">This will permanently delete the trip and all its itinerary data. This cannot be undone.</p>
+    <div class="confirm-btns">
+      <button class="btn-cancel" id="confirm-cancel-btn">Keep it</button>
+      <button class="btn-danger" id="confirm-delete-btn">Yes, delete</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getAuth, signOut }  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+  import { getFirestore, collection, addDoc, updateDoc, getDocs, deleteDoc, doc, query, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const app = initializeApp({
+    apiKey: "AIzaSyA9OR2w5FgjvAy_rcGtWpT5R6tBNg1goBg",
+    authDomain: "dhianne-ceb5c.firebaseapp.com",
+    projectId: "dhianne-ceb5c",
+    storageBucket: "dhianne-ceb5c.firebasestorage.app",
+    messagingSenderId: "393795711893",
+    appId: "1:393795711893:web:c8bd9c8eb8398f29c77c9c"
+  });
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  /* ── AUTH GUARD ── */
+  const session = JSON.parse(sessionStorage.getItem('roamly_session') || 'null');
+  if (!session) { window.location.href = 'login.html'; }
+
+  /* ── NAV ── */
+  const nameEl   = document.getElementById('nav-name');
+  const avatarEl = document.getElementById('nav-avatar');
+  if (session) {
+    nameEl.textContent   = session.name || session.email;
+    avatarEl.textContent = (session.name || session.email)[0].toUpperCase();
+  }
+  document.getElementById('signout-btn').addEventListener('click', async () => {
+    await signOut(auth).catch(() => {});
+    sessionStorage.removeItem('roamly_session');
+    window.location.href = 'login.html';
+  });
+
+  /* ── CARD COLORS ── */
+  const PALETTES = [
+    { from: '#D4664A', to: '#B85A3E' },
+    { from: '#3B6E8F', to: '#2D5570' },
+    { from: '#4E7C59', to: '#3A5E42' },
+    { from: '#7C5C8F', to: '#5E4570' },
+    { from: '#8F6B3B', to: '#6E5030' },
+    { from: '#3B7C7A', to: '#2D5E5C' },
+  ];
+  function palette(idx) { return PALETTES[idx % PALETTES.length]; }
+
+  /* ── TRIPS STATE ── */
+  let allTrips = [];
+  let activeFilter = 'all';
+  let deletingId = null;
+  let editingId  = null;
+
+  /* ── LOAD TRIPS ── */
+  async function loadTrips() {
+    document.getElementById('loading-state').style.display = 'grid';
+    document.getElementById('trips-grid').style.display    = 'none';
+    document.getElementById('empty-state').style.display   = 'none';
+    try {
+      const q = query(collection(db, 'trips'), where('userId', '==', session.userId));
+      const snap = await getDocs(q);
+      allTrips = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } catch (e) {
+      allTrips = [];
+    }
+    document.getElementById('loading-state').style.display = 'none';
+    renderTrips();
+  }
+
+  function renderTrips() {
+    const today = new Date(); today.setHours(0,0,0,0);
+    let filtered = allTrips;
+    if (activeFilter === 'upcoming') filtered = allTrips.filter(t => t.endDate && new Date(t.endDate) >= today);
+    if (activeFilter === 'past')     filtered = allTrips.filter(t => t.endDate && new Date(t.endDate) < today);
+
+    const label = document.getElementById('trip-count-label');
+    label.textContent = allTrips.length === 0 ? 'No trips yet — create your first one!'
+      : allTrips.length === 1 ? '1 trip planned' : `${allTrips.length} trips planned`;
+
+    if (filtered.length === 0) {
+      document.getElementById('trips-grid').style.display  = 'none';
+      document.getElementById('empty-state').style.display = 'block';
+      return;
+    }
+    document.getElementById('empty-state').style.display  = 'none';
+    document.getElementById('trips-grid').style.display   = 'grid';
+    document.getElementById('trips-grid').innerHTML = filtered.map((t, i) => tripCardHTML(t, i)).join('');
+
+    // attach events
+    filtered.forEach(t => {
+      document.getElementById('view-'+t.id)?.addEventListener('click', () => {
+        window.location.href = `trip.html?id=${t.id}`;
+      });
+      document.getElementById('edit-'+t.id)?.addEventListener('click', e => { e.stopPropagation(); openModal(t); });
+      document.getElementById('del-'+t.id)?.addEventListener('click', e => { e.stopPropagation(); openConfirm(t.id); });
+    });
+  }
+
+  function tripCardHTML(trip, idx) {
+    const p = palette(idx);
+    const days = dayCount(trip.startDate, trip.endDate);
+    const dateStr = formatDateRange(trip.startDate, trip.endDate);
+    const status  = tripStatus(trip.endDate);
+    return `
+      <div class="trip-card" onclick="window.location.href='trip.html?id=${trip.id}'">
+        <div class="trip-card-cover" style="background:linear-gradient(135deg,${p.from} 0%,${p.to} 100%)">
+          <div class="trip-card-cover-inner"></div>
+          <span class="trip-badge">${status.icon} ${status.label}</span>
+        </div>
+        <div class="trip-card-body">
+          <div class="trip-destination">${esc(trip.destination)}</div>
+          <div class="trip-name">${esc(trip.name || 'Unnamed trip')}</div>
+          <div class="trip-meta">
+            <span class="trip-meta-item">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1.5" y="2.5" width="10" height="9" rx="1.5" stroke="#9CA3AF" stroke-width="1.2"/><path d="M4.5 1v3M8.5 1v3M1.5 6h10" stroke="#9CA3AF" stroke-width="1.2" stroke-linecap="round"/></svg>
+              ${dateStr}
+            </span>
+            <span class="trip-meta-item">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="4.5" stroke="#9CA3AF" stroke-width="1.2"/><path d="M6.5 4v2.5l2 1" stroke="#9CA3AF" stroke-width="1.2" stroke-linecap="round"/></svg>
+              ${days} day${days !== 1 ? 's' : ''}
+            </span>
+            ${trip.travelers ? `<span class="trip-meta-item"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="5" cy="4.5" r="2" stroke="#9CA3AF" stroke-width="1.2"/><path d="M1.5 11c0-2 1.6-3.5 3.5-3.5s3.5 1.5 3.5 3.5" stroke="#9CA3AF" stroke-width="1.2" stroke-linecap="round"/><circle cx="9.5" cy="4" r="1.5" stroke="#9CA3AF" stroke-width="1.2"/><path d="M11.5 10.5c0-1.6-1-2.8-2.5-3" stroke="#9CA3AF" stroke-width="1.2" stroke-linecap="round"/></svg>${esc(trip.travelers)} traveler${trip.travelers === '1' ? '' : 's'}</span>` : ''}
+          </div>
+          <div class="trip-actions">
+            <button class="btn-view-trip" id="view-${trip.id}">View Itinerary</button>
+            <button class="btn-icon" id="edit-${trip.id}" title="Edit trip">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9.5 1.5l3 3-8 8H1.5v-3l8-8z" stroke="#9CA3AF" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button class="btn-icon" id="del-${trip.id}" title="Delete trip">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 3.5h10M5.5 3.5V2h3v1.5M5.5 6v4M8.5 6v4M3 3.5l.7 7.5h6.6l.7-7.5" stroke="#9CA3AF" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  /* ── HELPERS ── */
+  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function dayCount(start, end) {
+    if (!start || !end) return 1;
+    const diff = new Date(end) - new Date(start);
+    return Math.max(1, Math.round(diff / 86400000) + 1);
+  }
+
+  function formatDateRange(start, end) {
+    if (!start) return 'Dates TBD';
+    const s = new Date(start + 'T00:00:00');
+    const e = end ? new Date(end + 'T00:00:00') : null;
+    const opts = { month: 'short', day: 'numeric' };
+    if (!e) return s.toLocaleDateString('en-US', opts);
+    if (s.getFullYear() !== e.getFullYear()) return s.toLocaleDateString('en-US', {...opts, year: 'numeric'}) + ' – ' + e.toLocaleDateString('en-US', {...opts, year: 'numeric'});
+    if (s.getMonth() !== e.getMonth()) return s.toLocaleDateString('en-US', opts) + ' – ' + e.toLocaleDateString('en-US', opts);
+    return s.toLocaleDateString('en-US', opts) + '–' + e.getDate() + ', ' + s.getFullYear();
+  }
+
+  function tripStatus(endDate) {
+    if (!endDate) return { label: 'Planning', icon: '📋' };
+    const today = new Date(); today.setHours(0,0,0,0);
+    const end   = new Date(endDate + 'T00:00:00');
+    if (end < today) return { label: 'Completed', icon: '✅' };
+    const diff = Math.ceil((end - today) / 86400000);
+    if (diff <= 30) return { label: `In ${diff}d`, icon: '✈️' };
+    return { label: 'Upcoming', icon: '🗓️' };
+  }
+
+  /* ── FILTER TABS ── */
+  document.getElementById('filter-tabs').addEventListener('click', e => {
+    const btn = e.target.closest('.tab-btn'); if (!btn) return;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    renderTrips();
+  });
+
+  /* ── CREATE TRIP MODAL ── */
+  function openModal(trip = null) {
+    editingId = trip ? trip.id : null;
+    document.getElementById('modal-title').textContent = trip ? 'Edit Trip' : 'New Trip';
+    document.getElementById('modal-submit-btn').textContent = trip ? 'Save Changes' : 'Create Trip';
+    document.getElementById('trip-destination').value = trip?.destination || '';
+    document.getElementById('trip-name').value        = trip?.name || '';
+    document.getElementById('trip-start').value       = trip?.startDate || '';
+    document.getElementById('trip-end').value         = trip?.endDate || '';
+    document.getElementById('trip-travelers').value   = trip?.travelers || '2';
+    document.getElementById('modal-error').style.display = 'none';
+    document.getElementById('trip-modal').style.display  = 'flex';
+    document.getElementById('trip-destination').focus();
+  }
+  function closeModal() { document.getElementById('trip-modal').style.display = 'none'; editingId = null; }
+
+  document.getElementById('new-trip-btn').addEventListener('click',    () => openModal());
+  document.getElementById('empty-new-trip-btn').addEventListener('click', () => openModal());
+  document.getElementById('modal-close-btn').addEventListener('click',  closeModal);
+  document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
+  document.getElementById('trip-modal').addEventListener('click', e => { if (e.target === document.getElementById('trip-modal')) closeModal(); });
+
+  document.getElementById('modal-submit-btn').addEventListener('click', async () => {
+    const dest      = document.getElementById('trip-destination').value.trim();
+    const name      = document.getElementById('trip-name').value.trim();
+    const startDate = document.getElementById('trip-start').value;
+    const endDate   = document.getElementById('trip-end').value;
+    const travelers = document.getElementById('trip-travelers').value;
+    const errEl     = document.getElementById('modal-error');
+
+    errEl.style.display = 'none';
+    if (!dest) { errEl.textContent = 'Please enter a destination.'; errEl.style.display = 'block'; return; }
+    if (!startDate || !endDate) { errEl.textContent = 'Please select your travel dates.'; errEl.style.display = 'block'; return; }
+    if (new Date(endDate) < new Date(startDate)) { errEl.textContent = 'End date must be after start date.'; errEl.style.display = 'block'; return; }
+
+    const btn = document.getElementById('modal-submit-btn');
+    btn.classList.add('loading'); btn.disabled = true;
+    try {
+      if (editingId) {
+        await updateDoc(doc(db, 'trips', editingId), { destination: dest, name: name || dest, startDate, endDate, travelers });
+      } else {
+        const data = { userId: session.userId, destination: dest, name: name || dest, startDate, endDate, travelers, createdAt: new Date().toISOString() };
+        await addDoc(collection(db, 'trips'), data);
+      }
+      closeModal();
+      await loadTrips();
+    } catch (e) {
+      console.error('Trip save error:', e);
+      errEl.textContent = e.message || 'Something went wrong. Please try again.'; errEl.style.display = 'block';
+    } finally {
+      btn.classList.remove('loading'); btn.disabled = false;
+    }
+  });
+
+  /* ── DELETE TRIP ── */
+  function openConfirm(id) { deletingId = id; document.getElementById('confirm-modal').style.display = 'flex'; }
+  function closeConfirm()  { deletingId = null; document.getElementById('confirm-modal').style.display = 'none'; }
+  document.getElementById('confirm-cancel-btn').addEventListener('click', closeConfirm);
+  document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
+    if (!deletingId) return;
+    await deleteDoc(doc(db, 'trips', deletingId)).catch(() => {});
+    closeConfirm();
+    await loadTrips();
+  });
+
+  /* ── INIT ── */
+  loadTrips();
+</script>
+</body>
+</html>
