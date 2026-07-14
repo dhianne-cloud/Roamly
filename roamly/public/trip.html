@@ -753,8 +753,16 @@
     return a;
   }
 
+  function fetchWithTimeout(url, opts = {}, ms = 10000) {
+    const ctrl = new AbortController();
+    const id = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, { ...opts, signal: ctrl.signal })
+      .then(r => { clearTimeout(id); return r; })
+      .catch(e => { clearTimeout(id); throw e.name === 'AbortError' ? new Error('Request timed out — check your connection') : e; });
+  }
+
   async function geocodeDestination(destination) {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(destination)}`);
+    const res = await fetchWithTimeout(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(destination)}`, { headers: { 'Accept-Language': 'en' } });
     if (!res.ok) throw new Error(`Geocoding failed (HTTP ${res.status})`);
     const data = await res.json();
     if (!data.length) throw new Error(`Could not find "${destination}" on the map`);
@@ -764,17 +772,17 @@
   async function fetchNearbyPOIs(destination) {
     if (poiCache[destination]) return poiCache[destination];
     const { lat, lon } = await geocodeDestination(destination);
-    const overpassQuery = `[out:json][timeout:20];(
-      node["tourism"~"attraction|museum|gallery|viewpoint|zoo|theme_park"](around:3000,${lat},${lon});
-      node["amenity"~"restaurant|cafe"](around:1500,${lat},${lon});
-      node["leisure"~"park|garden"](around:2500,${lat},${lon});
-      node["historic"](around:3000,${lat},${lon});
-    );out body 60;`;
-    const res = await fetch('https://overpass.kumi.systems/api/interpreter', {
+    const overpassQuery = `[out:json][timeout:15];(
+      node["tourism"~"attraction|museum|gallery|viewpoint|zoo|theme_park"](around:5000,${lat},${lon});
+      node["amenity"~"restaurant|cafe"](around:2000,${lat},${lon});
+      node["leisure"~"park|garden"](around:4000,${lat},${lon});
+      node["historic"](around:5000,${lat},${lon});
+    );out body 40;`;
+    const res = await fetchWithTimeout('https://overpass-api.de/api/interpreter', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: 'data=' + encodeURIComponent(overpassQuery)
-    });
+    }, 15000);
     if (!res.ok) throw new Error(`Could not load nearby places (HTTP ${res.status})`);
     const data = await res.json();
     const seenNames = new Set();
