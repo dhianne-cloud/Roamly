@@ -836,7 +836,9 @@
   async function fetchNearbyPOIs(destination) {
     if (poiCache[destination]) return poiCache[destination];
     const cached = loadFromLS(destination);
-    if (cached) { poiCache[destination] = cached; return cached; }
+    // Bust cache if it still has Japanese/non-English names (legacy)
+    const hasNonAscii = cached?.some(p => /[^\x00-\x7F]/.test(p.name));
+    if (cached && !hasNonAscii) { poiCache[destination] = cached; return cached; }
     const { lat, lon } = await geocodeDestination(destination);
     const overpassQuery = `[out:json][timeout:15];(
       node["tourism"~"attraction|museum|gallery|viewpoint|zoo|theme_park"](around:5000,${lat},${lon});
@@ -854,7 +856,7 @@
     const seenNames = new Set();
     const pois = [];
     for (const el of data.elements || []) {
-      const name = el.tags?.name;
+      const name = el.tags?.['name:en'] || el.tags?.['name:en-US'] || el.tags?.name;
       if (!name || seenNames.has(name)) continue;
       seenNames.add(name);
       pois.push({ name, ...classifyPOI(el.tags) });
