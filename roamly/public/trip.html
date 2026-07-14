@@ -620,9 +620,73 @@
     await loadStops();
   }
 
-  /* ── NEARBY-PLACE SUGGESTIONS (OpenStreetMap — free, keyless, no billing) ── */
-  let suggestionsCache = {}; // cache per day so we don't re-fetch
-  let poiCache = {}; // cache raw POIs per destination so switching days doesn't re-query Overpass
+  /* ── NEARBY-PLACE SUGGESTIONS ── */
+  let suggestionsCache = {};
+  let poiCache = {};
+
+  /* Curated fallback for popular destinations */
+  const CURATED = {
+    'tokyo': [
+      {name:'Senso-ji Temple',emoji:'⛩️',duration:90,description:'Historic Buddhist temple in Asakusa'},
+      {name:'Shibuya Crossing',emoji:'🚶',duration:30,description:'World\'s busiest pedestrian crossing'},
+      {name:'Shinjuku Gyoen',emoji:'🌸',duration:60,description:'Beautiful national garden'},
+      {name:'Tsukiji Outer Market',emoji:'🍣',duration:60,description:'Fresh sushi and street food'},
+      {name:'teamLab Planets',emoji:'🎨',duration:90,description:'Immersive digital art museum'},
+      {name:'Akihabara',emoji:'🎮',duration:60,description:'Electronics and anime district'},
+    ],
+    'kyoto': [
+      {name:'Fushimi Inari Shrine',emoji:'⛩️',duration:120,description:'Thousands of iconic torii gates'},
+      {name:'Arashiyama Bamboo Grove',emoji:'🎋',duration:45,description:'Serene bamboo forest walk'},
+      {name:'Kinkaku-ji (Golden Pavilion)',emoji:'🏯',duration:60,description:'Stunning gold-leaf temple'},
+      {name:'Nishiki Market',emoji:'🍱',duration:60,description:'Kyoto\'s kitchen — street food galore'},
+      {name:'Philosopher\'s Path',emoji:'🌿',duration:45,description:'Scenic canal-side walking path'},
+      {name:'Gion District',emoji:'🏮',duration:60,description:'Traditional geisha neighborhood'},
+    ],
+    'paris': [
+      {name:'Eiffel Tower',emoji:'🗼',duration:120,description:'Iconic iron lattice tower'},
+      {name:'Louvre Museum',emoji:'🏛️',duration:180,description:'World\'s largest art museum'},
+      {name:'Montmartre',emoji:'🎨',duration:90,description:'Bohemian hilltop neighborhood'},
+      {name:'Notre-Dame Cathedral',emoji:'⛪',duration:60,description:'Gothic medieval cathedral'},
+      {name:'Musée d\'Orsay',emoji:'🖼️',duration:120,description:'Impressionist art collection'},
+      {name:'Le Marais',emoji:'🛍️',duration:90,description:'Trendy shops and galleries'},
+    ],
+    'bali': [
+      {name:'Tanah Lot Temple',emoji:'🌊',duration:90,description:'Sea temple on rocky outcrop'},
+      {name:'Ubud Monkey Forest',emoji:'🐒',duration:60,description:'Sacred forest with macaques'},
+      {name:'Tegallalang Rice Terraces',emoji:'🌾',duration:60,description:'Stunning stepped rice paddies'},
+      {name:'Seminyak Beach',emoji:'🏖️',duration:90,description:'Trendy beach with great sunsets'},
+      {name:'Uluwatu Temple',emoji:'⛩️',duration:90,description:'Clifftop temple with kecak dance'},
+      {name:'Ubud Art Market',emoji:'🛍️',duration:60,description:'Handcrafts and local souvenirs'},
+    ],
+    'new york': [
+      {name:'Central Park',emoji:'🌿',duration:90,description:'Iconic 840-acre urban park'},
+      {name:'Metropolitan Museum of Art',emoji:'🏛️',duration:150,description:'One of the world\'s greatest museums'},
+      {name:'Brooklyn Bridge',emoji:'🌉',duration:45,description:'Historic bridge with Manhattan views'},
+      {name:'Times Square',emoji:'🌆',duration:30,description:'Neon-lit commercial intersection'},
+      {name:'High Line',emoji:'🚶',duration:60,description:'Elevated park on old rail line'},
+      {name:'Chelsea Market',emoji:'🍽️',duration:60,description:'Food hall in a historic building'},
+    ],
+  };
+
+  function getCuratedSuggestions(destination, day) {
+    const key = Object.keys(CURATED).find(k => destination.toLowerCase().includes(k));
+    if (!key) return null;
+    const list = CURATED[key];
+    const start = (day - 1) % list.length;
+    return [...list.slice(start), ...list.slice(0, start)].slice(0, 6);
+  }
+
+  function lsKey(dest) { return `roamly_pois_${dest.toLowerCase().replace(/\s+/g,'_')}`; }
+  function saveToLS(dest, pois) { try { localStorage.setItem(lsKey(dest), JSON.stringify({pois, ts: Date.now()})); } catch(e){} }
+  function loadFromLS(dest) {
+    try {
+      const raw = localStorage.getItem(lsKey(dest));
+      if (!raw) return null;
+      const {pois, ts} = JSON.parse(raw);
+      if (Date.now() - ts > 86400000) return null; // expire after 24h
+      return pois;
+    } catch(e) { return null; }
+  }
 
   document.getElementById('suggest-btn').addEventListener('click', async () => {
     const panel = document.getElementById('suggest-panel');
@@ -771,6 +835,8 @@
 
   async function fetchNearbyPOIs(destination) {
     if (poiCache[destination]) return poiCache[destination];
+    const cached = loadFromLS(destination);
+    if (cached) { poiCache[destination] = cached; return cached; }
     const { lat, lon } = await geocodeDestination(destination);
     const overpassQuery = `[out:json][timeout:15];(
       node["tourism"~"attraction|museum|gallery|viewpoint|zoo|theme_park"](around:5000,${lat},${lon});
@@ -794,14 +860,23 @@
       pois.push({ name, ...classifyPOI(el.tags) });
     }
     poiCache[destination] = pois;
+    saveToLS(destination, pois);
     return pois;
   }
 
   async function fetchSuggestions(destination, day) {
-    const pois = await fetchNearbyPOIs(destination);
-    if (!pois.length) throw new Error(`No nearby places found for "${destination}"`);
-    const shuffled = seededShuffle(pois, day * 7919 + destination.length);
-    return shuffled.slice(0, 6).map(p => ({ name: p.name, emoji: p.emoji, duration: p.duration, description: p.label }));
+    try {
+      const pois = await fetchNearbyPOIs(destination);
+      if (pois.length) {
+        const shuffled = seededShuffle(pois, day * 7919 + destination.length);
+        return shuffled.slice(0, 6).map(p => ({ name: p.name, emoji: p.emoji, duration: p.duration, description: p.label }));
+      }
+    } catch(e) {
+      console.warn('Map API failed, using curated list:', e.message);
+    }
+    const curated = getCuratedSuggestions(destination, day);
+    if (curated) return curated;
+    throw new Error(`No suggestions found for "${destination}". Try a more specific city name.`);
   }
 
   /* ── INIT ── */
